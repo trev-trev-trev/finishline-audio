@@ -70,6 +70,10 @@ def main() -> None:
     vf.add_argument("--host", default="127.0.0.1")
     vf.add_argument("--port", type=int, default=11000)
 
+    rs = sub.add_parser("reset", help="Reset master Utility gain to center")
+    rs.add_argument("--host", default="127.0.0.1")
+    rs.add_argument("--port", type=int, default=11000)
+
     args = p.parse_args()
 
     if args.version:
@@ -135,6 +139,11 @@ def main() -> None:
     if args.cmd == "verify":
         v = verify_master_utility_gain(args.track_id, args.device_id, target=RpcTarget(host=args.host, port=args.port))
         print(v)
+        return
+
+    if args.cmd == "reset":
+        set_utility_gain_norm(0, 0, 0.5, target=RpcTarget(host=args.host, port=args.port))
+        print("sent")
         return
 
     p.print_help()
