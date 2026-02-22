@@ -16,6 +16,7 @@ from flaas.inspect_selected_device import inspect_selected_device
 from flaas.eq8_set_param import eq8_set_param
 from flaas.inspect_selected_track import inspect_selected_track
 from flaas.device_set_param import device_set_param
+from flaas.device_param_info import device_param_info
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -115,6 +116,15 @@ def main() -> None:
     dsp.add_argument("--host", default="127.0.0.1")
     dsp.add_argument("--port", type=int, default=11000)
 
+    dpi = sub.add_parser("device-param-info", help="Show single parameter metadata")
+    dpi.add_argument("track_id", type=int, help="Track index")
+    dpi.add_argument("device_id", type=int, help="Device index")
+    dpi.add_argument("--param-id", type=int, required=True, help="Parameter index")
+    dpi.add_argument("--timeout", type=float, default=5.0)
+    dpi.add_argument("--raw", action="store_true", help="Print raw OSC tuples")
+    dpi.add_argument("--host", default="127.0.0.1")
+    dpi.add_argument("--port", type=int, default=11000)
+
     args = p.parse_args()
 
     if args.version:
@@ -208,6 +218,10 @@ def main() -> None:
 
     if args.cmd == "device-set-param":
         device_set_param(track_id=args.track_id, device_id=args.device_id, param_id=args.param_id, value=args.value, target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout, dry=args.dry)
+        return
+
+    if args.cmd == "device-param-info":
+        device_param_info(track_id=args.track_id, device_id=args.device_id, param_id=args.param_id, target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout, raw=args.raw)
         return
 
     p.print_help()

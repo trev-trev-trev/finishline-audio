@@ -126,6 +126,7 @@ flaas verify-audio output/master.wav
 | `flaas export-guide` | Print export settings | - | - | 0=ok |
 | `flaas inspect-selected-device` | Show device param table | OSC | - | 0=ok |
 | `flaas inspect-selected-track` | Show device list for track | OSC | - | 0=ok |
+| `flaas device-param-info <t> <d> --param-id N` | Show single param metadata | OSC | - | 0=ok |
 | `flaas eq8-set-param --param-id N --value V` | Set param on selected device | OSC | OSC params | 0=ok |
 | `flaas device-set-param <t> <d> --param-id N --value V` | Set any device param (generic) | OSC | OSC params | 0=ok |
 
