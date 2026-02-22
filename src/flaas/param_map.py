@@ -8,14 +8,16 @@ class ParamRange:
     max: float
 
 def get_param_range(track_id: int, device_id: int, param_id: int, target: OscTarget = OscTarget(), timeout_sec: float = 3.0) -> ParamRange:
-    mn = request_once(target, "/live/device/get/parameter/min", [track_id, device_id, param_id], timeout_sec=timeout_sec)
-    mx = request_once(target, "/live/device/get/parameter/max", [track_id, device_id, param_id], timeout_sec=timeout_sec)
-    # responses: (track_id, device_id, param_id, value)
-    return ParamRange(min=float(mn[3]), max=float(mx[3]))
+    mins = request_once(target, "/live/device/get/parameters/min", [track_id, device_id], timeout_sec=timeout_sec)
+    maxs = request_once(target, "/live/device/get/parameters/max", [track_id, device_id], timeout_sec=timeout_sec)
+    # responses: (track_id, device_id, [values...])
+    idx = 2 + int(param_id)
+    if idx >= len(mins) or idx >= len(maxs):
+        raise IndexError(f"param_id {param_id} out of range (mins={len(mins)-2}, maxs={len(maxs)-2})")
+    return ParamRange(min=float(mins[idx]), max=float(maxs[idx]))
 
 def db_to_norm(db: float, pr: ParamRange) -> float:
-    # clamp into range then scale
-    v = max(pr.min, min(pr.max, db))
+    v = max(pr.min, min(pr.max, float(db)))
     if pr.max == pr.min:
         return 0.0
     return (v - pr.min) / (pr.max - pr.min)
