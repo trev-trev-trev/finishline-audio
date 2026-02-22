@@ -6,7 +6,13 @@
 
 ## Start Here
 
-New to the project? Read these in order:
+**For new conversation threads or quick context loading**:
+
+1. **[status/CURRENT.md](status/CURRENT.md)** ⭐⭐⭐ **PRIMARY CHECKPOINT** (≤200 lines, where-we-are-now)
+2. **[status/ROADMAP.md](status/ROADMAP.md)** - Next 20 actions (prioritized)
+3. **[status/README.md](status/README.md)** - How to use checkpoint system
+
+**For deep understanding**:
 
 1. **[project/operating-manual-v1.md](project/operating-manual-v1.md)** ⭐⭐ **UNIFIED DAILY REFERENCE**
 2. **[reference/FINISHLINE_PROGRESS_INDEX.md](reference/FINISHLINE_PROGRESS_INDEX.md)** - Current technical state
@@ -16,6 +22,12 @@ New to the project? Read these in order:
 ---
 
 ## By Topic
+
+### Status & Checkpoints
+- **[status/CURRENT.md](status/CURRENT.md)** ⭐⭐⭐ **Load this FIRST in new threads**
+- **[status/ROADMAP.md](status/ROADMAP.md)** - Next 20 expansions
+- **[status/RECEIPTS/](status/RECEIPTS/)** - Validated step history
+- **[status/README.md](status/README.md)** - Checkpoint system usage
 
 ### Getting Started
 - **[../README.md](../README.md)** - Main README (quickstart, installation)
@@ -33,6 +45,7 @@ New to the project? Read these in order:
 - **[project/mvp_remaining.md](project/mvp_remaining.md)** - What's left to build
 
 ### Reference
+- **[status/CURRENT.md](status/CURRENT.md)** ⭐ **Primary checkpoint** (use this for quick state)
 - **[reference/finishline_context_state.json](reference/finishline_context_state.json)** - Machine-readable state
 - **[reference/FINISHLINE_PROGRESS_INDEX.md](reference/FINISHLINE_PROGRESS_INDEX.md)** - Step-by-step build history
 - **[reference/unique-lines/INDEX.md](reference/unique-lines/INDEX.md)** - Unique line ledger (code transparency)
@@ -45,6 +58,13 @@ New to the project? Read these in order:
 ---
 
 ## All Documents
+
+### Status (Checkpoints)
+- [CURRENT.md](status/CURRENT.md) ⭐⭐⭐ **PRIMARY** (≤200 lines, load FIRST)
+- [ROADMAP.md](status/ROADMAP.md) - Next 20 expansions
+- [README.md](status/README.md) - System usage guide
+- [RECEIPTS/](status/RECEIPTS/) - Validated steps
+- [TEMPLATES/](status/TEMPLATES/) - Receipt + status templates
 
 ### Project (Vision & Planning)
 - [operating-manual-v1.md](project/operating-manual-v1.md) ⭐⭐ **UNIFIED DAILY REFERENCE**

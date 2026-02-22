@@ -2,11 +2,27 @@
 
 **Finish Line Audio Automation System - Engineering Documentation**
 
+---
+
+## Status / Checkpoints ⭐
+
+**START HERE** for new conversation threads:
+
+- **[status/CURRENT.md](status/CURRENT.md)** ⭐⭐⭐ **Load this FIRST** (≤200 lines, where-we-are-now)
+- **[status/ROADMAP.md](status/ROADMAP.md)** - Next 20 expansions (prioritized)
+- **[status/RECEIPTS/](status/RECEIPTS/)** - Validated step history (terminal outputs)
+- **[status/README.md](status/README.md)** - How to use checkpoint system
+
+**Purpose**: Reconstruct project state in <5 minutes. Terminal-first, minimal bloat.
+
+---
+
 ## Directory Map
 
 ```
 docs/
 ├── README.md (this file)
+├── status/          ⭐ Status checkpoints (CURRENT.md, ROADMAP.md, receipts)
 ├── project/         - Vision, philosophy, planning docs
 ├── architecture/    - Technical specs, implementation guides
 ├── osc/            - OSC protocol specs and endpoint docs (TBD)
