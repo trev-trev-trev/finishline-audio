@@ -7,7 +7,7 @@ from flaas.analyze import write_analysis
 from flaas.check import write_check
 from flaas.plan import write_plan_gain_actions
 from flaas.apply import apply_actions_dry_run, apply_actions_osc
-from flaas.util import set_utility_gain_norm, set_utility_gain_db
+from flaas.util import set_utility_gain_norm, set_utility_gain_linear
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -44,19 +44,19 @@ def main() -> None:
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=11000)
 
-    ugn = sub.add_parser("util-gain-norm", help="Set Utility Gain parameter normalized 0..1")
+    ugn = sub.add_parser("util-gain-norm", help="Set Utility Gain normalized 0..1")
     ugn.add_argument("track_id", type=int)
     ugn.add_argument("device_id", type=int)
     ugn.add_argument("gain_norm", type=float)
     ugn.add_argument("--host", default="127.0.0.1")
     ugn.add_argument("--port", type=int, default=11000)
 
-    ugd = sub.add_parser("util-gain-db", help="Set Utility Gain in dB (mapped via param min/max)")
-    ugd.add_argument("track_id", type=int)
-    ugd.add_argument("device_id", type=int)
-    ugd.add_argument("gain_db", type=float)
-    ugd.add_argument("--host", default="127.0.0.1")
-    ugd.add_argument("--port", type=int, default=11000)
+    ugl = sub.add_parser("util-gain-linear", help="Set Utility Gain in exposed linear range (ex: -1..+1)")
+    ugl.add_argument("track_id", type=int)
+    ugl.add_argument("device_id", type=int)
+    ugl.add_argument("gain_linear", type=float)
+    ugl.add_argument("--host", default="127.0.0.1")
+    ugl.add_argument("--port", type=int, default=11000)
 
     args = p.parse_args()
 
@@ -111,8 +111,8 @@ def main() -> None:
         print("sent")
         return
 
-    if args.cmd == "util-gain-db":
-        set_utility_gain_db(args.track_id, args.device_id, args.gain_db, target=RpcTarget(host=args.host, port=args.port))
+    if args.cmd == "util-gain-linear":
+        set_utility_gain_linear(args.track_id, args.device_id, args.gain_linear, target=RpcTarget(host=args.host, port=args.port))
         print("sent")
         return
 
