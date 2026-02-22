@@ -158,35 +158,26 @@ make write       # 39s, 13 tests (commit gate)
 
 ## NEXT ACTION
 
-**Run fully automated batch** (zero clicks on macOS):
+**Generate 3 master candidates** (fully automated, zero clicks):
 
 ```bash
-flaas experiment-run data/experiments/master_sweep.json
+flaas master-candidates
 ```
 
-**Pre-requisites**:
-- Ableton Live running with project open
-- Export defaults: Rendered Track = Master, Normalize = OFF
-- Loop/selection: 4-8 bars
-- **macOS permissions** (one-time):
-  - System Settings → Accessibility → Terminal ON
-  - System Settings → Automation → Terminal → System Events ON
+**What it does**:
+- 3 curated presets (CONSENSUS, VARIANT A, VARIANT B)
+- Iterative threshold search per candidate (up to 6 iterations each)
+- Auto-exports via UI automation (macOS)
+- Stops each candidate when LUFS -10.50 ±0.5, Peak ≤ -6.00
+- Outputs: `output/master_consensus.wav`, `output/master_variant_a.wav`, `output/master_variant_b.wav`
+- Logs: `output/master_candidates.jsonl`
 
-**What happens**:
-1. Prompts: Confirm Master fader = 0.0 dB, press Enter
-2. Auto-sets params via OSC (Glue, Limiter)
-3. Auto-exports via AppleScript (Cmd+Shift+R → Save)
-4. Auto-verifies (LUFS, peak)
-5. Logs to `output/experiments.jsonl`
-6. Early exit on success (targets hit)
-
-**Config**: 3 experiments (GR 12-18 dB, Makeup 15-20 dB, Limiter 28-32 dB)
-
-**Goal**: Close 3.09 LU gap (-13.59 → -10.50) while maintaining peak ≤ -6.00
+**Goal**: Generate 3 Spotify-ready masters from current 8-bar loop
 
 **After completion**:
 ```bash
-tail -n 5 output/experiments.jsonl
+ls -lh output/master_*.wav
+tail -n 5 output/master_candidates.jsonl
 ```
 
 ---
