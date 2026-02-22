@@ -80,42 +80,83 @@ def compute_sha256(path: Path) -> str:
 def master_consensus(
     target: OscTarget = OscTarget(),
     auto_export_enabled: bool = True,
-    target_lufs: float = -8.0,  # MAXIMUM competitive loudness (Spotify/Apple Music ceiling)
-    peak_limit: float = -6.0,
+    mode: str = "loud_preview",  # streaming_safe | loud_preview | headroom
 ) -> int:
     """
-    Generate ONE high-quality consensus master with MAXIMUM loudness optimization.
+    Generate ONE high-quality consensus master with mode-based optimization.
+    
+    Modes:
+    - streaming_safe: -14 LUFS, -1 dBTP (official Spotify/streaming spec)
+    - loud_preview: -9 LUFS, -2 dBTP (competitive commercial, addresses 'super quiet')
+    - headroom: -6 dBFS sample peak (internal safety)
     
     Strategy:
-    - Start VERY aggressive: Heavy compression (GR 18-20 dB), high makeup (25 dB), max limiter gain (40 dB)
-    - Iterate up to 15 times to hit LUFS target (-8.0) while maintaining peak safety
-    - Push loudness as hard as possible (streaming service ceiling)
-    - Adjust threshold, makeup, and limiter gain dynamically based on results
+    - Resolve devices at runtime (Glue, Saturator, Limiter)
+    - Start aggressive, iterate up to 15 times
+    - Use Saturator for RMS boost (more efficient than extreme compression)
+    - Detect diminishing returns on limiter gain (stop if < 0.2 LU improvement)
+    - Adaptive adjustments based on gap size
     
-    Output: output/master_consensus.wav
-    Log: output/master_consensus.jsonl
+    Output: output/master_{mode}.wav
+    Log: output/master_{mode}.jsonl
     
     Returns 0 on success, 20 on failure.
     """
+    # Mode-based targets
+    mode_configs = {
+        "streaming_safe": {
+            "target_lufs": -14.0,
+            "true_peak_limit": -1.0,
+            "desc": "Streaming Safe (official Spotify spec)",
+        },
+        "loud_preview": {
+            "target_lufs": -9.0,
+            "true_peak_limit": -2.0,
+            "desc": "Loud Preview (competitive commercial)",
+        },
+        "headroom": {
+            "target_lufs": -10.0,
+            "true_peak_limit": -6.0,
+            "desc": "Headroom Safe (internal safety margin)",
+        },
+    }
+    
+    if mode not in mode_configs:
+        print(f"ERROR: Invalid mode '{mode}'. Valid: {list(mode_configs.keys())}")
+        return 20
+    
+    config = mode_configs[mode]
+    target_lufs = config["target_lufs"]
+    true_peak_limit = config["true_peak_limit"]
+    mode_desc = config["desc"]
     master_track_id = -1000
-    final_output = Path("output/master_consensus.wav")
-    log_path = Path("output/master_consensus.jsonl")
+    final_output = Path(f"output/master_{mode}.wav")
+    log_path = Path(f"output/master_{mode}.jsonl")
     log_path.parent.mkdir(parents=True, exist_ok=True)
     
     print("="*70)
-    print("MASTER CONSENSUS: MAXIMUM LOUDNESS OPTIMIZATION")
+    print(f"MASTER CONSENSUS: {mode_desc.upper()}")
     print("="*70)
-    print(f"\nTarget: LUFS {target_lufs:.1f} (MAXIMUM competitive loudness)")
-    print(f"Peak limit: {peak_limit:.1f} dBFS")
-    print(f"Strategy: Push as loud as possible for streaming services")
+    print(f"\nMode: {mode}")
+    print(f"Target: LUFS {target_lufs:.1f}")
+    print(f"True peak limit: {true_peak_limit:.1f} dBTP")
     print(f"")
     
-    # Resolve devices
+    # Resolve devices (Glue, Saturator, Limiter)
     print(f"Resolving devices on track {master_track_id}...")
     try:
         glue_device_id = resolve_device_id_by_name(master_track_id, "Glue Compressor", target)
-        limiter_device_id = resolve_device_id_by_name(master_track_id, "Limiter", target)
         print(f"  ✓ Glue Compressor: device {glue_device_id}")
+        
+        # Saturator is optional but recommended for RMS boost
+        saturator_device_id = None
+        try:
+            saturator_device_id = resolve_device_id_by_name(master_track_id, "Saturator", target)
+            print(f"  ✓ Saturator: device {saturator_device_id}")
+        except RuntimeError:
+            print(f"  ⚠ Saturator not found (optional, but recommended for max loudness)")
+        
+        limiter_device_id = resolve_device_id_by_name(master_track_id, "Limiter", target)
         print(f"  ✓ Limiter: device {limiter_device_id}")
     except RuntimeError as e:
         print(f"ERROR: {e}")
@@ -125,8 +166,14 @@ def master_consensus(
     print(f"\nResolving parameters...")
     try:
         glue_params = resolve_device_params(master_track_id, glue_device_id, target)
-        limiter_params = resolve_device_params(master_track_id, limiter_device_id, target)
         print(f"  ✓ Glue Compressor: {len(glue_params)} params")
+        
+        saturator_params = None
+        if saturator_device_id is not None:
+            saturator_params = resolve_device_params(master_track_id, saturator_device_id, target)
+            print(f"  ✓ Saturator: {len(saturator_params)} params")
+        
+        limiter_params = resolve_device_params(master_track_id, limiter_device_id, target)
         print(f"  ✓ Limiter: {len(limiter_params)} params")
     except Exception as e:
         print(f"ERROR: Failed to resolve params: {e}")
@@ -139,28 +186,53 @@ def master_consensus(
     print(f"  [ ] Export defaults: Rendered Track=Master, Normalize=OFF")
     print(f"  [ ] Export folder = /Users/trev/Repos/finishline_audio_repo/output")
     print(f"  [ ] Loop/selection set to 8-bar section")
-    print(f"  [ ] Master fader = 0.0 dB (verify visually)")
-    print(f"  [ ] Device chain: Utility → EQ → Glue Compressor → Limiter (all ON)")
+    print(f"  [ ] Master fader = 0.0 dB (CRITICAL - verify visually)")
+    print(f"  [ ] Device chain: Utility → EQ → Glue → Saturator → Limiter (all ON)")
+    if saturator_device_id is None:
+        print(f"  ⚠ Saturator missing (add for best RMS boost, or continue without)")
     print(f"{'─'*70}")
     input("Press Enter to start optimization...")
     
-    # Starting parameters (VERY aggressive for maximum loudness)
-    threshold = -40.0  # HEAVY compression (GR 18-20 dB target)
-    makeup = 25.0      # MAXIMUM makeup for output level
-    ratio = 6.0        # Strong ratio for consistent level
-    attack = 5.0       # Fast attack for tight control
-    limiter_ceiling = -6.1  # Tight margin
-    limiter_gain = 40.0     # MAXIMUM gain (at limiter limit)
+    # Mode-specific starting parameters
+    if mode == "streaming_safe":
+        # Conservative: Hit -14 LUFS (official spec)
+        threshold = -28.0
+        makeup = 12.0
+        ratio = 3.0
+        attack = 10.0
+        saturator_drive = 2.0
+        limiter_gain = 20.0
+    elif mode == "loud_preview":
+        # Aggressive: Hit -9 LUFS (competitive commercial)
+        threshold = -35.0
+        makeup = 20.0
+        ratio = 5.0
+        attack = 8.0
+        saturator_drive = 5.0
+        limiter_gain = 32.0
+    else:  # headroom
+        # Moderate: Prioritize peak safety
+        threshold = -30.0
+        makeup = 15.0
+        ratio = 4.0
+        attack = 10.0
+        saturator_drive = 3.0
+        limiter_gain = 26.0
     
-    print(f"\nStarting parameters (MAXIMUM loudness strategy):")
-    print(f"  Glue: Threshold {threshold:.1f} dB (heavy compression)")
-    print(f"  Glue: Makeup {makeup:.1f} dB (maximum output)")
+    target_lufs = config["target_lufs"]
+    true_peak_limit = config["true_peak_limit"]
+    
+    print(f"\nStarting parameters ({mode} mode):")
+    print(f"  Glue: Threshold {threshold:.1f} dB, Makeup {makeup:.1f} dB")
     print(f"  Glue: Ratio {ratio:.1f}:1, Attack {attack:.1f} ms")
-    print(f"  Limiter: Ceiling {limiter_ceiling:.1f} dB, Gain {limiter_gain:.1f} dB (maximum)")
+    if saturator_device_id:
+        print(f"  Saturator: Drive {saturator_drive:.1f} dB (soft clip)")
+    print(f"  Limiter: Gain {limiter_gain:.1f} dB")
     print(f"")
     
     best_result = None
     best_distance = float('inf')
+    last_lufs = None  # Track diminishing returns
     
     for iteration in range(1, 16):  # Up to 15 iterations for convergence
         print(f"\n{'─'*70}")
@@ -182,8 +254,10 @@ def master_consensus(
             set_param(master_track_id, glue_device_id, "Attack", attack, glue_params, target)
             print(f"  ✓ Glue Attack = {attack:.1f} ms")
             
-            set_param(master_track_id, limiter_device_id, "Ceiling", limiter_ceiling, limiter_params, target)
-            print(f"  ✓ Limiter Ceiling = {limiter_ceiling:.1f} dB")
+            # Saturator (if available)
+            if saturator_device_id and saturator_params:
+                set_param(master_track_id, saturator_device_id, "Drive", saturator_drive, saturator_params, target)
+                print(f"  ✓ Saturator Drive = {saturator_drive:.1f} dB")
             
             set_param(master_track_id, limiter_device_id, "Gain", limiter_gain, limiter_params, target)
             print(f"  ✓ Limiter Gain = {limiter_gain:.1f} dB")
@@ -216,10 +290,11 @@ def master_consensus(
             analysis = analyze_wav(temp_export)
             
             lufs_distance = abs(analysis.lufs_i - target_lufs)
-            peak_safe = analysis.peak_dbfs <= peak_limit
+            true_peak_safe = analysis.true_peak_dbtp <= true_peak_limit
             
-            print(f"  LUFS: {analysis.lufs_i:.2f} dBFS (target {target_lufs:.1f}, distance {lufs_distance:.2f})")
-            print(f"  Peak: {analysis.peak_dbfs:.2f} dBFS (limit {peak_limit:.1f}, safe={peak_safe})")
+            print(f"  LUFS: {analysis.lufs_i:.2f} (target {target_lufs:.1f}, distance {lufs_distance:.2f})")
+            print(f"  Sample Peak: {analysis.peak_dbfs:.2f} dBFS")
+            print(f"  True Peak: {analysis.true_peak_dbtp:.2f} dBTP (limit {true_peak_limit:.1f}, safe={true_peak_safe})")
             
             # Log iteration
             iter_log = {
@@ -227,26 +302,27 @@ def master_consensus(
                 "threshold_db": threshold,
                 "makeup_db": makeup,
                 "ratio": ratio,
-                "limiter_ceiling_db": limiter_ceiling,
+                "saturator_drive_db": saturator_drive if saturator_device_id else None,
                 "limiter_gain_db": limiter_gain,
                 "lufs_i": analysis.lufs_i,
                 "peak_dbfs": analysis.peak_dbfs,
+                "true_peak_dbtp": analysis.true_peak_dbtp,
                 "lufs_distance": lufs_distance,
-                "peak_safe": peak_safe,
+                "true_peak_safe": true_peak_safe,
             }
             
-            # Check if this is best so far (closest to target with safe peak)
-            if peak_safe and lufs_distance < best_distance:
+            # Check if this is best so far (closest to target with safe true peak)
+            if true_peak_safe and lufs_distance < best_distance:
                 best_distance = lufs_distance
                 best_result = iter_log
                 print(f"  ✅ BEST SO FAR (distance {lufs_distance:.2f})")
             
-            # Check convergence (LUFS within 0.5 LU of target, peak safe)
-            if peak_safe and lufs_distance <= 0.5:
+            # Check convergence (LUFS within 0.5 LU of target, true peak safe)
+            if true_peak_safe and lufs_distance <= 0.5:
                 print(f"\n{'='*70}")
                 print(f"✅ CONVERGENCE ACHIEVED")
                 print(f"  LUFS: {analysis.lufs_i:.2f} (target {target_lufs:.1f})")
-                print(f"  Peak: {analysis.peak_dbfs:.2f} (limit {peak_limit:.1f})")
+                print(f"  True Peak: {analysis.true_peak_dbtp:.2f} (limit {true_peak_limit:.1f})")
                 print(f"{'='*70}")
                 # Rename to final
                 if temp_export != final_output:
@@ -257,47 +333,89 @@ def master_consensus(
                 best_result["final"] = True
                 break
             
+            # Detect diminishing returns on limiter gain
+            if last_lufs is not None:
+                lufs_improvement = analysis.lufs_i - last_lufs
+                if lufs_improvement < 0.2 and analysis.lufs_i < target_lufs:
+                    print(f"    ⚠️  Diminishing returns detected (LUFS improved only {lufs_improvement:.2f} LU)")
+                    print(f"    → Switching strategy: Using Saturator instead of limiter gain")
+                    if saturator_device_id:
+                        saturator_drive += 2.0
+                        print(f"    → Saturator Drive increased to {saturator_drive:.1f} dB")
+            
+            last_lufs = analysis.lufs_i
+            
             # Adjust for next iteration
             print(f"\n  Adjusting for next iteration...")
             
-            if not peak_safe:
-                # Peak too high - CRITICAL: reduce gain immediately
-                print(f"    ⚠️  Peak too high ({analysis.peak_dbfs:.2f} > {peak_limit:.1f})")
+            if not true_peak_safe:
+                # True peak too high - CRITICAL: reduce gain immediately
+                print(f"    ⚠️  True peak too high ({analysis.true_peak_dbtp:.2f} > {true_peak_limit:.1f})")
                 limiter_gain -= 2.0
                 print(f"    → Reducing limiter gain to {limiter_gain:.1f} dB")
             
             elif analysis.lufs_i < target_lufs:
-                # Too quiet - need MORE LOUDNESS (push harder)
+                # Too quiet - need more loudness
                 lufs_gap = target_lufs - analysis.lufs_i
-                print(f"    ⚠️  TOO QUIET (gap {lufs_gap:.2f} LU) - PUSHING LOUDER")
+                print(f"    Too quiet (gap {lufs_gap:.2f} LU)")
                 
+                # Check if limiter gain is hitting diminishing returns
+                if last_lufs is not None:
+                    lufs_improvement = analysis.lufs_i - last_lufs
+                    if lufs_improvement > 0 and lufs_improvement < 0.2:
+                        print(f"      ⚠️  Limiter gain has diminishing returns ({lufs_improvement:.2f} LU improvement)")
+                        print(f"      → Prioritizing compression + saturation over limiter gain")
+                        # Use compression/saturation, not limiter
+                        if lufs_gap > 2.0:
+                            print(f"    → Large gap: threshold -4 dB, makeup +2 dB, saturator +2 dB")
+                            threshold -= 4.0
+                            makeup += 2.0
+                            if saturator_device_id:
+                                saturator_drive += 2.0
+                        elif lufs_gap > 1.0:
+                            print(f"    → Medium gap: threshold -3 dB, makeup +1.5 dB, saturator +1.5 dB")
+                            threshold -= 3.0
+                            makeup += 1.5
+                            if saturator_device_id:
+                                saturator_drive += 1.5
+                        else:
+                            print(f"    → Small gap: threshold -2 dB, makeup +1 dB, saturator +1 dB")
+                            threshold -= 2.0
+                            makeup += 1.0
+                            if saturator_device_id:
+                                saturator_drive += 1.0
+                        continue  # Skip limiter gain increase below
+                
+                # Normal adjustment (limiter not capped yet)
                 if lufs_gap > 3.0:
-                    # Huge gap: MAXIMUM push
-                    print(f"    → HUGE gap: threshold -6 dB, makeup +3 dB, limiter gain +4 dB")
-                    threshold -= 6.0  # HEAVY compression
-                    makeup += 3.0     # MAXIMUM output
-                    limiter_gain += 4.0  # MAXIMUM final gain
-                elif lufs_gap > 2.0:
-                    # Large gap: Very aggressive
-                    print(f"    → Large gap: threshold -5 dB, makeup +2.5 dB, limiter gain +3.5 dB")
+                    print(f"    → Huge gap: threshold -5 dB, makeup +2.5 dB, limiter +3 dB, saturator +2 dB")
                     threshold -= 5.0
                     makeup += 2.5
-                    limiter_gain += 3.5
-                elif lufs_gap > 1.0:
-                    # Medium gap: aggressive
-                    print(f"    → Medium gap: threshold -3.5 dB, makeup +2 dB, limiter gain +2.5 dB")
-                    threshold -= 3.5
+                    limiter_gain += 3.0
+                    if saturator_device_id:
+                        saturator_drive += 2.0
+                elif lufs_gap > 2.0:
+                    print(f"    → Large gap: threshold -4 dB, makeup +2 dB, limiter +2.5 dB, saturator +1.5 dB")
+                    threshold -= 4.0
                     makeup += 2.0
                     limiter_gain += 2.5
-                else:
-                    # Small gap: moderate push
-                    print(f"    → Small gap: threshold -2 dB, makeup +1.5 dB, limiter gain +1.5 dB")
-                    threshold -= 2.0
+                    if saturator_device_id:
+                        saturator_drive += 1.5
+                elif lufs_gap > 1.0:
+                    print(f"    → Medium gap: threshold -3 dB, makeup +1.5 dB, limiter +2 dB, saturator +1 dB")
+                    threshold -= 3.0
                     makeup += 1.5
-                    limiter_gain += 1.5
+                    limiter_gain += 2.0
+                    if saturator_device_id:
+                        saturator_drive += 1.0
+                else:
+                    print(f"    → Small gap: threshold -2 dB, makeup +1 dB, limiter +1 dB")
+                    threshold -= 2.0
+                    makeup += 1.0
+                    limiter_gain += 1.0
             
             elif analysis.lufs_i > target_lufs:
-                # Too loud (rare, but possible)
+                # Too loud (rare)
                 lufs_excess = analysis.lufs_i - target_lufs
                 print(f"    Too loud (excess {lufs_excess:.2f} LU)")
                 print(f"    → Raising threshold by 2 dB, reducing makeup by 1 dB")
@@ -315,12 +433,12 @@ def master_consensus(
     
     # If we didn't hit exact convergence, use best result
     if not best_result.get("final"):
-        print(f"\n{'='*70}")
-        print(f"USING BEST RESULT (closest to target)")
-        print(f"  LUFS: {best_result['lufs_i']:.2f} (target {target_lufs:.1f}, distance {best_result['lufs_distance']:.2f})")
-        print(f"  Peak: {best_result['peak_dbfs']:.2f} (limit {peak_limit:.1f})")
-        print(f"  Iteration: {best_result['iteration']}")
-        print(f"{'='*70}")
+    print(f"\n{'='*70}")
+    print(f"USING BEST RESULT (closest to target)")
+    print(f"  LUFS: {best_result['lufs_i']:.2f} (target {target_lufs:.1f}, distance {best_result['lufs_distance']:.2f})")
+    print(f"  True Peak: {best_result['true_peak_dbtp']:.2f} (limit {true_peak_limit:.1f})")
+    print(f"  Iteration: {best_result['iteration']}")
+    print(f"{'='*70}")
         
         # Find the best iteration file and rename to final
         best_iter = best_result['iteration']
@@ -338,7 +456,8 @@ def master_consensus(
     # Write final log
     final_log = {
         "ts": datetime.now(timezone.utc).isoformat(),
-        "name": "CONSENSUS (high-quality, competitive loudness)",
+        "mode": mode,
+        "name": mode_desc,
         "export_file": str(final_output),
         "sha256": best_result.get("sha256", ""),
         "params": {
@@ -349,16 +468,23 @@ def master_consensus(
                 "ratio": best_result["ratio"],
                 "attack_ms": attack,
             },
+            "saturator": {
+                "drive_db": best_result.get("saturator_drive_db"),
+            } if saturator_device_id else None,
             "limiter": {
-                "ceiling_db": best_result["limiter_ceiling_db"],
                 "gain_db": best_result["limiter_gain_db"],
             },
         },
         "results": {
             "lufs_i": best_result["lufs_i"],
             "peak_dbfs": best_result["peak_dbfs"],
+            "true_peak_dbtp": best_result["true_peak_dbtp"],
             "lufs_distance": best_result["lufs_distance"],
-            "peak_safe": best_result["peak_safe"],
+            "true_peak_safe": best_result["true_peak_safe"],
+        },
+        "targets": {
+            "target_lufs": target_lufs,
+            "true_peak_limit_dbtp": true_peak_limit,
         },
         "iterations_total": best_result["iteration"],
         "converged": best_result.get("final", False),
@@ -369,22 +495,23 @@ def master_consensus(
     
     # Print final summary
     print(f"\n{'='*70}")
-    print(f"✅ CONSENSUS MASTER COMPLETE")
+    print(f"✅ CONSENSUS MASTER COMPLETE: {mode_desc}")
     print(f"{'='*70}")
     print(f"")
     print(f"File: {final_output}")
     print(f"")
     print(f"Results:")
-    print(f"  LUFS: {best_result['lufs_i']:.2f} dBFS (target {target_lufs:.1f})")
-    print(f"  Peak: {best_result['peak_dbfs']:.2f} dBFS (limit {peak_limit:.1f})")
+    print(f"  LUFS: {best_result['lufs_i']:.2f} (target {target_lufs:.1f})")
+    print(f"  True Peak: {best_result['true_peak_dbtp']:.2f} dBTP (limit {true_peak_limit:.1f})")
     print(f"  Distance from target: {best_result['lufs_distance']:.2f} LU")
-    print(f"  Peak safe: {best_result['peak_safe']}")
+    print(f"  True peak safe: {best_result['true_peak_safe']}")
     print(f"")
     print(f"Final settings:")
     print(f"  Glue Threshold: {best_result['threshold_db']:.1f} dB")
     print(f"  Glue Makeup: {best_result['makeup_db']:.1f} dB")
     print(f"  Glue Ratio: {best_result['ratio']:.1f}:1")
-    print(f"  Limiter Ceiling: {best_result['limiter_ceiling_db']:.1f} dB")
+    if best_result.get('saturator_drive_db'):
+        print(f"  Saturator Drive: {best_result['saturator_drive_db']:.1f} dB")
     print(f"  Limiter Gain: {best_result['limiter_gain_db']:.1f} dB")
     print(f"")
     print(f"Iterations: {best_result['iteration']}")
@@ -410,18 +537,24 @@ def update_export_findings(result: dict) -> None:
     entry += f"**Command**: `flaas master-consensus`\n"
     entry += f"**File**: `{result['export_file']}`\n\n"
     
+    targets = result.get('targets', {})
     entry += "**Results**:\n"
-    entry += f"- LUFS: {result['results']['lufs_i']:.2f} dBFS (target {-9.0:.1f})\n"
-    entry += f"- Peak: {result['results']['peak_dbfs']:.2f} dBFS (limit -6.0)\n"
+    entry += f"- LUFS: {result['results']['lufs_i']:.2f} (target {targets.get('target_lufs', -9.0):.1f})\n"
+    entry += f"- True Peak: {result['results']['true_peak_dbtp']:.2f} dBTP (limit {targets.get('true_peak_limit_dbtp', -2.0):.1f})\n"
+    entry += f"- Sample Peak: {result['results']['peak_dbfs']:.2f} dBFS\n"
     entry += f"- Distance from target: {result['results']['lufs_distance']:.2f} LU\n"
     entry += f"- Converged: {result['converged']}\n"
     entry += f"- Iterations: {result['iterations_total']}\n\n"
     
     entry += "**Final settings**:\n"
     glue = result['params']['glue']
-    limiter = result['params']['limiter']
     entry += f"- Glue: Threshold {glue['threshold_db']:.1f} dB, Makeup {glue['makeup_db']:.1f} dB, Ratio {glue['ratio']:.1f}:1\n"
-    entry += f"- Limiter: Ceiling {limiter['ceiling_db']:.1f} dB, Gain {limiter['gain_db']:.1f} dB\n"
+    if result['params'].get('saturator'):
+        sat = result['params']['saturator']
+        if sat and sat.get('drive_db'):
+            entry += f"- Saturator: Drive {sat['drive_db']:.1f} dB\n"
+    limiter = result['params']['limiter']
+    entry += f"- Limiter: Gain {limiter['gain_db']:.1f} dB\n"
     
     with findings_path.open("a", encoding="utf-8") as f:
         f.write(entry)

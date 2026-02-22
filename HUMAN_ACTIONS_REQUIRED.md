@@ -2,7 +2,10 @@
 
 **Goal**: Generate ONE high-quality, LOUD master from your 8-bar loop
 
-**Target**: LUFS -8.0 (maximum competitive loudness, NOT quiet)
+**Modes Available**:
+- `loud_preview` (default): -9 LUFS, -2 dBTP (competitive commercial, addresses "super quiet")
+- `streaming_safe`: -14 LUFS, -1 dBTP (official Spotify spec, quieter)
+- `headroom`: -10 LUFS, -6 dBFS (internal safety)
 
 **Status**: All code implemented ✅ Ready to run
 
@@ -182,70 +185,77 @@ cat output/master_candidates.jsonl | jq .
 **Before each run**:
 - [ ] Ableton Live running with project open
 - [ ] Loop/selection set to 8-bar section
-- [ ] Master fader = 0.0 dB
-- [ ] Master device chain: Utility → EQ → Glue Compressor → Limiter (all ON)
+- [ ] Master fader = 0.0 dB (CRITICAL - post-chain, defeats limiter if boosted)
+- [ ] Master device chain: Utility → EQ → Glue Compressor → **Saturator** → Limiter (all ON)
+  - **Saturator optional but recommended** (add for maximum loudness)
 
-**Run command** (ONE LOUD master):
+**Run command** (LOUD mode for "super quiet" issue):
 ```bash
-cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate && flaas master-consensus
+cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate && flaas master-consensus --mode loud_preview
 ```
 
 **What it does**:
-- Generates ONE thoroughly optimized master (MAXIMUM loudness)
-- Target: **LUFS -8.0** (commercial ceiling, as loud as it gets)
-- Up to 15 iterations with very aggressive adjustments
-- Starting params: HEAVY compression (GR 18-20 dB) + MAXIMUM limiter gain (40 dB)
-- Pushes loudness as hard as possible while maintaining peak safety
-- Stops when within 0.5 LU of target with safe peak
+- Generates ONE thoroughly optimized master (loud_preview mode)
+- Target: **LUFS -9.0, True Peak -2 dBTP** (competitive commercial loudness)
+- Up to 15 iterations with adaptive adjustments
+- Uses Saturator + Glue Compressor + Limiter (3-stage processing)
+- Detects diminishing returns (stops pushing limiter when ineffective)
+- Prioritizes Saturator/compression over extreme limiter gain
+- Stops when within 0.5 LU of target with safe true peak
 
 **After completion**:
 ```bash
-ls -lh output/master_consensus.wav
-cat output/master_consensus.jsonl | jq .
+ls -lh output/master_loud_preview.wav
+cat output/master_loud_preview.jsonl | jq .
 ```
 
-**Listen**: `output/master_consensus.wav` should be LOUD, full, competitive (NOT quiet!)
+**Listen**: `output/master_loud_preview.wav` should be LOUD, full, competitive
 
-**If still too quiet**: See "Manual Loudness Boost" section below
-
----
-
----
-
-## MANUAL LOUDNESS BOOST (If Still Too Quiet)
-
-If automated output is still too quiet, do this in Ableton:
-
-### Option 1: Master Fader Boost (Simplest)
-
-**In Ableton**:
-1. Set Master track fader to **+3 to +6 dB** (boost post-chain)
-2. Export manually: File → Export → `output/master_manual_boost.wav`
-3. Verify: `flaas verify-audio output/master_manual_boost.wav`
-
-**Trade-off**: May exceed peak limit (but adds loudness)
-
-### Option 2: Limiter Gain Boost (Safer)
-
-**In Ableton**:
-1. Open Limiter device on Master track
-2. Set Gain to **maximum** (check max value in device, likely 42+ dB)
-3. Export manually: File → Export → `output/master_limiter_max.wav`
-4. Verify: `flaas verify-audio output/master_limiter_max.wav`
-
-**Trade-off**: More limiting (may lose dynamics, but stays peak-safe)
-
-### Option 3: Additional Compression Stage (Best Quality)
-
-**In Ableton**:
-1. Add **second Glue Compressor** before Limiter
-2. Chain: `[Utility] → [EQ] → [Glue 1] → [Glue 2] → [Limiter]`
-3. Glue 2 settings: Threshold -20 dB, Makeup 10 dB, Ratio 3:1
-4. Export manually: File → Export → `output/master_double_comp.wav`
-5. Verify: `flaas verify-audio output/master_double_comp.wav`
-
-**Trade-off**: More complex, but cleanest loudness boost
+**Other modes** (if you want different loudness):
+```bash
+flaas master-consensus --mode streaming_safe  # -14 LUFS (official Spotify, quieter)
+flaas master-consensus --mode headroom        # -10 LUFS (moderate)
+```
 
 ---
 
-**Next step**: Run `flaas master-consensus` first, listen, then manual boost if needed.
+---
+
+## IF STILL TOO QUIET (Add Saturator First)
+
+**Best solution**: Add Saturator to device chain (most efficient RMS boost)
+
+### Add Saturator (Recommended)
+
+**In Ableton**:
+1. **Add Saturator** device to Master track
+2. **Position**: AFTER Glue Compressor, BEFORE Limiter
+3. **Chain order**: `[Utility] → [EQ] → [Glue Compressor] → [Saturator] → [Limiter]`
+4. **Settings**:
+   - Soft Clip = ON
+   - Drive = 3-8 dB (start at 5 dB)
+   - Dry/Wet = 100%
+5. Run `flaas master-consensus --mode loud_preview` again
+
+**Why Saturator**: Raises average level (RMS) more efficiently than extreme compression, smoother sound
+
+### If STILL too quiet after Saturator
+
+**Option 1: Use streaming_safe mode for reference**:
+```bash
+flaas master-consensus --mode streaming_safe  # -14 LUFS (quieter but official)
+```
+If this is also too quiet, issue is likely playback volume, not master
+
+**Option 2: Check playback volume**:
+- System volume control
+- Headphone/speaker amp gain
+- Compare to commercial reference track at same volume
+
+**DO NOT**:
+- ❌ Boost Master fader (it's post-chain, defeats limiter, breaks peak safety)
+- ❌ Push limiter gain to max (diminishing returns, causes distortion)
+
+---
+
+**Next step**: Run `flaas master-consensus --mode loud_preview` and listen.
