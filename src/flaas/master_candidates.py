@@ -241,8 +241,9 @@ def master_candidates(target: OscTarget = OscTarget(), auto_export_enabled: bool
                 break
             
             # Export (auto or manual)
-            export_path = Path(candidate.export_file).absolute()
-            temp_export = export_path.parent / f"{export_path.stem}_iter{iteration}{export_path.suffix}"
+            # CRITICAL: Resolve to absolute path, delete existing
+            export_path = Path(candidate.export_file).expanduser().resolve()
+            temp_export = (export_path.parent / f"{export_path.stem}_iter{iteration}{export_path.suffix}").resolve()
             
             # Remove existing file
             if temp_export.exists():
@@ -251,7 +252,7 @@ def master_candidates(target: OscTarget = OscTarget(), auto_export_enabled: bool
             if auto_export_enabled and sys.platform == "darwin":
                 print(f"    📤 Auto-exporting: {temp_export.name}")
                 try:
-                    auto_export_wav(temp_export, timeout_s=180)
+                    auto_export_wav(temp_export, timeout_s=600)
                     print(f"    ✓ Export complete")
                 except RuntimeError as e:
                     print(f"    ✗ Export failed: {e}")
