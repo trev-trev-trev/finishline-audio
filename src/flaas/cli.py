@@ -20,6 +20,7 @@ from flaas.device_param_info import device_param_info
 from flaas.eq8_map import generate_eq8_map
 from flaas.eq8_set import eq8_set
 from flaas.eq8_reset_gains import eq8_reset_gains
+from flaas.device_map import generate_device_map
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -155,6 +156,13 @@ def main() -> None:
     eq8r.add_argument("--host", default="127.0.0.1")
     eq8r.add_argument("--port", type=int, default=11000)
 
+    dm = sub.add_parser("device-map", help="Generate generic device parameter map as JSON")
+    dm.add_argument("track_id", type=int, help="Track index")
+    dm.add_argument("device_id", type=int, help="Device index")
+    dm.add_argument("--timeout", type=float, default=5.0)
+    dm.add_argument("--host", default="127.0.0.1")
+    dm.add_argument("--port", type=int, default=11000)
+
     args = p.parse_args()
 
     if args.version:
@@ -268,6 +276,13 @@ def main() -> None:
 
     if args.cmd == "eq8-reset-gains":
         eq8_reset_gains(track_id=args.track_id, device_id=args.device_id, target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout, dry=args.dry)
+        return
+
+    if args.cmd == "device-map":
+        path = generate_device_map(track_id=args.track_id, device_id=args.device_id, target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout)
+        import json
+        data = json.load(open(path))
+        print(f"WROTE {path} (class={data['device_class_name']} params={len(data['params'])})")
         return
 
     p.print_help()

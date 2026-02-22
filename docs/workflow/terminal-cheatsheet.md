@@ -127,6 +127,7 @@ flaas verify-audio output/master.wav
 | `flaas inspect-selected-device` | Show device param table | OSC | - | 0=ok |
 | `flaas inspect-selected-track` | Show device list for track | OSC | - | 0=ok |
 | `flaas device-param-info <t> <d> --param-id N` | Show single param metadata | OSC | - | 0=ok |
+| `flaas device-map <t> <d>` | Generate generic device param map | OSC | `registry/*.json` | 0=ok |
 | `flaas eq8-map <t> <d>` | Generate EQ Eight param map JSON | OSC | `registry/*.json` | 0=ok |
 | `flaas eq8-set <t> <d> --band N --side A/B --param gain --value V` | Set EQ Eight by semantic name | Map+OSC | OSC params | 0=ok |
 | `flaas eq8-reset-gains <t> <d>` | Reset all EQ band gains to 0 dB | Map+OSC | OSC params | 0=ok |
