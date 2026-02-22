@@ -146,7 +146,9 @@ make write       # 39s, 13 tests (commit gate)
 
 ## NEXT ACTION
 
-**Execute Step 2 of export triage**: In Ableton, disable ValhallaSpaceModulator + StudioVerse, attempt 4-8 bar export.
+**Manual iteration**: Increase compression (GR 15-18 dB, Makeup 15-18 dB, Limiter gain 28-30)
+
+**Goal**: Close 3.09 LU gap (-13.59 → -10.50) while maintaining peak ≤ -6.00
 
 ---
 
