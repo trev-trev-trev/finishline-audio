@@ -1,42 +1,66 @@
-FLAAS Smoke Tests - 2026-02-22 12:46:22 UTC
+FLAAS Smoke Tests - 2026-02-22 17:09:55 UTC
 Mode: READ+WRITE
 
-TEST: OSC ping
+TEST: remote-version
+remote_version=2026-02-22.1
 ✅ PASS
 
-TEST: Scan
+TEST: ping
+OSC ping
 ✅ PASS
 
-TEST: Inspect selected track
+TEST: inspect-track-41
+Inspect track 41
 ✅ PASS
 
-TEST: Inspect selected device
+TEST: scan
+Scan track 41
 ✅ PASS
 
-TEST: Device param info
+TEST: inspect-device-41-0
+Inspect device 41/0 (EQ Eight)
 ✅ PASS
 
-TEST: Device map
+TEST: inspect-device-41-1
+Inspect device 41/1
 ✅ PASS
 
-EQ8 Band 1 A Gain original: 0.0
-TEST: EQ8 set gain -3.0
+TEST: inspect-device-41-2
+Inspect device 41/2
 ✅ PASS
-TEST: EQ8 reset gain
+
+TEST: device-map-41-0
+Generate device map (EQ Eight)
 ✅ PASS
-EQ8 Band 1 A Freq original: 0.14274713397026062
-TEST: EQ8 set freq 0.20
+
+TEST: inspect-selected-track
+requires UI selection
+⏭️  SKIP: requires UI selection
+
+TEST: inspect-selected-device
+requires UI selection
+⏭️  SKIP: requires UI selection
+
+
+=== WRITE TESTS (with revert) ===
+
+TEST: eq8-set-gain
+EQ8 set gain -3.0
 ✅ PASS
-TEST: EQ8 reset freq
+
+TEST: eq8-reset-gain
+EQ8 reset gain to -0.2950819730758667
 ✅ PASS
-Limiter Ceiling original: -0.30000001192092896
-TEST: Limiter set ceiling -1.0
+
+TEST: eq8-set-freq
+EQ8 set freq 0.20
 ✅ PASS
-TEST: Limiter reset ceiling
+
+TEST: eq8-reset-freq
+EQ8 reset freq to 0.2458045482635498
 ✅ PASS
-Limiter Lookahead original: 1.0
-TEST: Limiter set lookahead 0
+
+TEST: plugin-set-safe-param
+Plugin device safe param (track 41, device 1)
 ✅ PASS
-TEST: Limiter reset lookahead
-✅ PASS
-SUMMARY: 14 passed, 0 failed
+

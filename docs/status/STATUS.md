@@ -1,10 +1,9 @@
 # STATUS (LOAD THIS FIRST)
 
-**Last updated**: 2026-02-22 12:41 UTC  
-**Commit**: `5a99e6b` - docs: add smoke test script to terminal cheatsheet  
-**Repo**: https://github.com/trev-trev-trev/finishline-audio  
-**Branch**: main  
-**Version**: 0.0.2
+**Last updated**: 2026-02-22 18:50 UTC  
+**Primary doc**: `STATE.md` (operational state, single source of truth)  
+**This doc**: Operating procedures and contract  
+**Repo**: `/Users/trev/Repos/finishline_audio_repo`
 
 ---
 
@@ -67,46 +66,35 @@ cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate
 
 ---
 
-## C) Where We Are
+## C) Current State
 
-**Milestone**: MVP (v0.1.0)  
-**Progress**: ~95% complete
+**See `STATE.md` for complete operational details.**
 
-**Last known-good commit**: `5a99e6b`  
-**Last known fingerprint**: `fff1ca7052cdab9c637ec6bdea73bea7cc34ae0f6aa2904f8fd6bb27a72fae64`  
-**Last validated**: 2026-02-22 12:41 UTC (smoke tests: 14/14 passed)
+**Current task**: Troubleshoot Ableton export crash (disable third-party plugins)
 
-**Tracks**: 1 (Master)  
-**Devices on track 0**: Utility (d0), EQ Eight (d1), Limiter (d2)
+**Applied state**: Master Utility gain at -0.750 linear (delta +0.250 applied, not reset)
+
+**Blocker**: Export crashes with third-party plugins (Valhalla, StudioVerse)
 
 ---
 
-## D) Verified Capabilities (short)
+## D) Commands
 
-✅ **OSC**: `ping --wait`, `scan`, `inspect-selected-track`, `inspect-selected-device`, `device-param-info`  
-✅ **Audio**: `analyze`, `check`, `verify-audio`  
-✅ **Generic control**: `device-set-param`, `device-map`  
-✅ **EQ Eight**: `eq8-map`, `eq8-set`, `eq8-reset-gains`  
-✅ **Limiter**: `limiter-set` (gain, ceiling, release, auto, link, lookahead)  
-✅ **Loop**: `loop`, `reset`, `apply --dry`  
-✅ **Smoke tests**: `./scripts/run_smoke_tests.sh` (6 read-only), `--write` (14 with revert)
+**See `STATE.md` for command reference.**
+
+**Key**: `plan-gain`, `apply`, `verify` (master track auto-resolution), `device-set-safe-param`, `eq8-set`, `limiter-set`
+
+**Smoke tests**: `make smoke` (7s), `make write-fast` (9s), `make write` (39s)
 
 ---
 
-## E) Current Context Snapshot (tight)
+## E) Critical Facts
 
-**Last completed**:
-- ✅ `limiter-set` command (semantic Limiter control)
-- ✅ Smoke test script (14 tests pass: read-only + write+revert)
-- 📊 Surface area: Utility (Gain), EQ Eight (8 bands A/B), Limiter (6 params)
+**See `STATE.md` for technical details.**
 
-**Critical gotchas**:
-- OSC port conflict: Sleep 1 sec between commands or use smoke script
-- Selected device timeout: Use explicit track/device IDs on Master/Return
-- Map files required: `eq8-set`/`eq8-reset-gains`/`limiter-set` need map generated first
-- Fingerprint enforcement: `apply` rejects if Live set changed since `plan-gain`
-
-**Assumptions**: Track 0 has Utility (d0), EQ Eight (d1), Limiter (d2)
+**Master track**: track_id=-1000 (NOT 0)  
+**Device resolution**: Query `/live/track/get/devices/name`, response is `(track_id, name0, name1, ...)`, skip first element  
+**Export crash**: Third-party plugins cause hang, disable first
 
 ---
 
@@ -167,25 +155,47 @@ Type a command.
 
 ### NEXT ACTION
 
-**Task**: Validate smoke tests can be run standalone (confirm it works for new user)
+**Task**: Troubleshoot Ableton export crash (render-path stability issue)
 
-**Command**:
+**Priority**: Execute in order, stop when export succeeds
+
+**Step 1: Shortest export test (4-8 bars)**
+1. In Ableton: Set Loop brace over 4-8 bars
+2. Export Master → Selection/Loop only
+3. If crashes: It's a hang, proceed to Step 2
+4. If succeeds: Test full-length export
+
+**Step 2: Plugin isolation (most common cause)**
 ```bash
-cd /Users/trev/Repos/finishline_audio_repo && ./scripts/run_smoke_tests.sh
+# Manual step in Ableton:
+# 1. Disable/bypass ALL third-party plugins:
+#    - ValhallaSpaceModulator (track 41, device 1)
+#    - StudioVerse Audio Effects Stereo (track 41, device 2)
+# 2. Keep only built-in devices (EQ Eight, Utility, Limiter)
+# 3. Re-run 4-8 bar export
+# 4. If works: Re-enable plugins one at a time to find culprit
 ```
 
-**Expected output**:
-- ✅ All 6 read-only tests PASS
-- Duration: ~25 seconds
-- Report written: `data/reports/smoke_latest.txt`
-- Exit code: 0
+**Step 3: Workaround (if plugins are culprit)**
+- Freeze/flatten tracks with crashing plugins
+- Create new "PRINT" Live set with audio stems only
+- Export from clean set
 
-**Pass criteria**:
-- Output contains "Passed: 6"
-- Output contains "Failed: 0"
-- Exit code 0
+**Step 4: System-level (if still crashes)**
+- Increase audio buffer: Preferences → Audio → Buffer Size 2048 or 4096
+- Validate render settings (Start/Length not blank)
+- Check disk space, export to local folder
+- Update Ableton Live to latest patch
 
-**On success**: Print "✅ Smoke tests validated. Ready for next expansion."
+**Expected outcome**: 
+- Identify crashing plugin (likely Valhalla or StudioVerse)
+- Successfully export short test file
+- Validate gain adjustment workflow works
+
+**On success**: 
+- Export `output/master_iter1.wav` with gain applied
+- Run `flaas verify-audio output/master_iter1.wav`
+- Confirm LUFS/peak changes from gain adjustment
 
 ---
 
@@ -225,22 +235,19 @@ After probe: ONE action (read/edit/run), then stop.
 
 ---
 
-## I) Quick Reference Links
+## I) Documentation
 
-**Order**: STATUS.md (this) → CURRENT.md → ROADMAP.md → operating-manual-v1.md → terminal-cheatsheet.md  
-**Recent**: RECEIPTS/ (smoke tests, limiter-set, device-map, inspect-selected-device)
+**Primary**: `STATE.md` (operational state)  
+**This file**: Operating procedures  
+**Legacy docs**: `docs/` (reference only)
 
 ---
 
-## J) Known Issues + Workarounds
+## J) Known Issues
 
-**OSC port conflict**: Sleep 1 sec between commands OR use smoke test script  
-**Selected device timeout**: Use explicit track/device IDs instead of selected_device on Master/Return  
-**Map file missing**: Error message shows exact command (e.g., `flaas eq8-map 0 1`)
+**See `STATE.md` for complete issue list and workarounds.**
 
-**Surface area** (track 0): Utility (d0, Gain), EQ Eight (d1, 8 bands A/B), Limiter (d2, 6 params)  
-**Ranges**: Utility Gain -1/+1, EQ Gain -15/+15 dB, Limiter Ceiling -24/0 dB  
-**Discovery**: `flaas device-param-info <t> <d> --param-id N` or `flaas device-map <t> <d>`
+**Current**: Export crash → disable third-party plugins → test 4-8 bars
 
 ---
 
