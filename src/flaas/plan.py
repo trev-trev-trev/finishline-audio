@@ -1,51 +1,15 @@
 from __future__ import annotations
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 from flaas.analyze import analyze_wav
-from flaas.targets import Targets, DEFAULT_TARGETS
+from flaas.targets import Targets, DEFAULT_TARGETS, MASTER_TRACK_ID, resolve_utility_device_id
 from flaas.actions import GainAction, write_actions
 from flaas.scan import scan_live
 from flaas.osc_rpc import OscTarget, request_once
 from flaas.param_map import get_param_range
 
-MASTER_TRACK_ID = -1000
 UTILITY_GAIN_PARAM_ID = 9
-
-
-def _resolve_utility_device_id(track_id: int, target: OscTarget = OscTarget()) -> int:
-    """
-    Resolve Utility device ID on the given track by querying device names.
-    
-    Returns device index if found.
-    Raises SystemExit(20) if Utility device not found.
-    """
-    try:
-        response = request_once(
-            target,
-            "/live/track/get/devices/name",
-            [track_id],
-            timeout_sec=3.0
-        )
-        # Response format: (track_id, name0, name1, name2, ...)
-        # Drop the first element (track_id), keep device names
-        names = list(response)[1:]
-        
-        for idx, name in enumerate(names):
-            if str(name).strip().lower() == "utility":
-                return idx
-        
-        # Utility not found
-        print(f"ERROR: Utility device not found on track {track_id}", file=sys.stderr)
-        print(f"Available devices: {names}", file=sys.stderr)
-        raise SystemExit(20)
-        
-    except SystemExit:
-        raise
-    except Exception as e:
-        print(f"ERROR: Failed to query devices on track {track_id}: {e}", file=sys.stderr)
-        raise SystemExit(20)
 
 @dataclass(frozen=True)
 class PlanGainResult:
@@ -75,7 +39,7 @@ def plan_utility_gain_delta_for_master(
     Uses MASTER_TRACK_ID (-1000) and dynamically resolves Utility device index.
     """
     # Resolve Utility device ID on master track
-    utility_device_id = _resolve_utility_device_id(MASTER_TRACK_ID, target=target_osc)
+    utility_device_id = resolve_utility_device_id(target=target_osc)
     
     a = analyze_wav(wav)
     err_db = targets.master_lufs - a.lufs_i

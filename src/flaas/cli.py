@@ -83,8 +83,8 @@ def main() -> None:
     lp.add_argument("--dry", action="store_true")
 
     vf = sub.add_parser("verify", help="Read back master Utility gain normalized")
-    vf.add_argument("--track-id", type=int, default=0)
-    vf.add_argument("--device-id", type=int, default=0)
+    vf.add_argument("--track-id", type=int, default=None, help="Track ID (defaults to master track -1000)")
+    vf.add_argument("--device-id", type=int, default=None, help="Device ID (defaults to dynamically resolved Utility)")
     vf.add_argument("--host", default="127.0.0.1")
     vf.add_argument("--port", type=int, default=11000)
 
@@ -257,8 +257,12 @@ def main() -> None:
         return
 
     if args.cmd == "verify":
-        v = verify_master_utility_gain(args.track_id, args.device_id, target=RpcTarget(host=args.host, port=args.port))
-        print(v)
+        val = verify_master_utility_gain(
+            track_id=args.track_id,
+            device_id=args.device_id,
+            target=RpcTarget(host=args.host, port=args.port)
+        )
+        print(f"{val:.6f}")
         return
 
     if args.cmd == "reset":
