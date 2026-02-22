@@ -11,6 +11,7 @@ from flaas.util import set_utility_gain_norm, set_utility_gain_linear
 from flaas.loop import run_loop
 from flaas.verify import verify_master_utility_gain
 from flaas.export_guide import print_export_guide
+from flaas.verify_audio import verify_audio
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -76,6 +77,9 @@ def main() -> None:
     rs.add_argument("--port", type=int, default=11000)
 
     eg = sub.add_parser("export-guide", help="Print Ableton export settings (manual MVP)")
+
+    va = sub.add_parser("verify-audio", help="Analyze+check a WAV and print PASS/FAIL")
+    va.add_argument("wav")
 
     args = p.parse_args()
 
@@ -152,6 +156,9 @@ def main() -> None:
     if args.cmd == "export-guide":
         print_export_guide()
         return
+
+    if args.cmd == "verify-audio":
+        raise SystemExit(verify_audio(args.wav))
 
     p.print_help()
 
