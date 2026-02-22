@@ -15,6 +15,7 @@ from flaas.verify_audio import verify_audio
 from flaas.inspect_selected_device import inspect_selected_device
 from flaas.eq8_set_param import eq8_set_param
 from flaas.inspect_selected_track import inspect_selected_track
+from flaas.device_set_param import device_set_param
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -103,6 +104,16 @@ def main() -> None:
     ist.add_argument("--raw", action="store_true", help="Print raw OSC tuples")
     ist.add_argument("--host", default="127.0.0.1")
     ist.add_argument("--port", type=int, default=11000)
+
+    dsp = sub.add_parser("device-set-param", help="Set any parameter on any device (generic)")
+    dsp.add_argument("track_id", type=int, help="Track index")
+    dsp.add_argument("device_id", type=int, help="Device index")
+    dsp.add_argument("--param-id", type=int, required=True, help="Parameter index")
+    dsp.add_argument("--value", type=float, required=True, help="Parameter value to set")
+    dsp.add_argument("--timeout", type=float, default=5.0)
+    dsp.add_argument("--dry", action="store_true", help="Preview only, no write")
+    dsp.add_argument("--host", default="127.0.0.1")
+    dsp.add_argument("--port", type=int, default=11000)
 
     args = p.parse_args()
 
@@ -193,6 +204,10 @@ def main() -> None:
 
     if args.cmd == "inspect-selected-track":
         inspect_selected_track(target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout, raw=args.raw)
+        return
+
+    if args.cmd == "device-set-param":
+        device_set_param(track_id=args.track_id, device_id=args.device_id, param_id=args.param_id, value=args.value, target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout, dry=args.dry)
         return
 
     p.print_help()
