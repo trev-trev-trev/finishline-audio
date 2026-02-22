@@ -1,8 +1,24 @@
-.venv/
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Python
 __pycache__/
 *.pyc
-.DS_Store
-.idea/
-.vscode/
-data/
-output/
+.venv/
+venv/
+.env
+
+# Audio / large outputs
+input/*.wav
+output/*.wav
+output/*.flac
+output/*.aiff
+data/reports/*.html
+data/caches/*.json
+data/actions/*.json
+data/timelines/*.json
+
+# Logs
+*.log
