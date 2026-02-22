@@ -3,6 +3,7 @@ from flaas.osc import OscTarget, send_ping
 from flaas.scan import write_model_cache
 from flaas.analyze import write_analysis
 from flaas.check import write_check
+from flaas.plan import write_plan_gain_actions
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -24,6 +25,10 @@ def main() -> None:
     check = sub.add_parser("check", help="Check WAV against compliance targets")
     check.add_argument("wav")
     check.add_argument("--out", default="data/reports/check.json")
+
+    pg = sub.add_parser("plan-gain", help="Plan Utility gain action to hit LUFS target (writes actions.json)")
+    pg.add_argument("wav")
+    pg.add_argument("--out", default="data/actions/actions.json")
 
     args = p.parse_args()
 
@@ -48,6 +53,11 @@ def main() -> None:
 
     if args.cmd == "check":
         out = write_check(args.wav, args.out)
+        print(str(out))
+        return
+
+    if args.cmd == "plan-gain":
+        out = write_plan_gain_actions(args.wav, args.out)
         print(str(out))
         return
 
