@@ -35,16 +35,16 @@ flaas verify-audio <wav>  # Check LUFS/peak vs targets
 flaas experiment-run <config.json>  # Batch parameter sweep
 ```
 
-## Next Action (Semi-Automated)
+## Next Action (Fully Automated)
 
-**Run batch experiment** (3 runs):
+**Run batch experiment** (3 runs, no manual clicks):
 ```bash
 flaas experiment-run data/experiments/master_sweep.json
 ```
 
 **What happens**:
-1. Auto-sets params (Glue, Limiter, Master fader)
-2. Pauses for manual export (you click Export in Ableton)
+1. Auto-sets params (Glue, Limiter) via OSC
+2. Auto-exports via macOS UI automation (no clicks)
 3. Auto-verifies LUFS/peak
 4. Logs to `output/experiments.jsonl`
 5. Early exit on success
@@ -52,5 +52,14 @@ flaas experiment-run data/experiments/master_sweep.json
 **Config**: GR 12-18 dB, Makeup 15-20 dB, Limiter 28-32 dB
 
 **Goal**: Close 3.09 LU gap (-13.59 → -10.50)
+
+**macOS Permissions Required** (one-time):
+- System Settings → Privacy & Security → Accessibility → Terminal ON
+- System Settings → Privacy & Security → Automation → Terminal → System Events ON
+
+**Pre-requisites**:
+- Ableton Live running with project open
+- Export defaults set: Rendered Track = Master, Normalize = OFF
+- Loop/selection set to desired range (4-8 bars)
 
 **See usage guide**: `docs/reference/EXPERIMENT_RUNNER_USAGE.md`

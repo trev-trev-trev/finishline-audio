@@ -29,6 +29,21 @@ flaas experiment-run data/experiments/master_sweep.json
 
 **Example config**: `data/experiments/master_sweep.json` (3 experiments included)
 
+### macOS Auto-Export (Fully Automated)
+
+**Requires** (one-time setup):
+1. **System Settings → Privacy & Security → Accessibility**
+   - Enable **Terminal** (or iTerm2 if using that)
+2. **System Settings → Privacy & Security → Automation**
+   - Enable **Terminal → System Events**
+3. **Ableton Live**:
+   - Export defaults configured: Rendered Track = Master, Normalize = OFF
+   - Loop/selection set to desired range (4-8 bars)
+
+**Config**: Set `"auto_export": {"enabled": true, "timeout_s": 600}` (default on macOS)
+
+**Behavior**: Exports triggered automatically via AppleScript UI automation (no manual clicks)
+
 ---
 
 ## Config Format
@@ -89,6 +104,12 @@ flaas experiment-run data/experiments/master_sweep.json
 - Config: `ceiling_db` → Device param: `Ceiling` or `ceiling`
 - Config: `gain_db` → Device param: `Gain` or `gain`
 
+**Auto-export config** (optional):
+- `auto_export`: Auto-export configuration
+  - `enabled`: true (auto via UI automation) or false (manual)
+  - `timeout_s`: Timeout for export + file stabilization (default 600)
+- **Default**: Enabled on macOS, disabled elsewhere
+
 ---
 
 ## Workflow Per Experiment
@@ -117,24 +138,35 @@ flaas experiment-run data/experiments/master_sweep.json
    - Convert dB → normalized [0,1]
    - Send `/live/device/set/parameter/value` per param
 
-### Phase 2: Export (Manual)
+### Phase 2: Export (Automatic or Manual)
 
-6. **Pause for manual export**:
-   ```
-   ──────────────────────────────────────────────────────────────────
-   📤 EXPORT NOW:
-      File → Export Audio/Video
-      Rendered Track = Master
-      Normalize = OFF
-      Filename: output/master_iter7.wav
-   ──────────────────────────────────────────────────────────────────
-   Press Enter after export completes...
-   ```
+6. **Export** (automatic on macOS with permissions):
+   - **If auto-export enabled**:
+     ```
+     ──────────────────────────────────────────────────────────────────
+     📤 AUTO-EXPORTING: master_iter7.wav
+     ──────────────────────────────────────────────────────────────────
+     ```
+     - Triggers via AppleScript (Cmd+Shift+R → Save dialog → filename)
+     - Waits for file to appear and stabilize
+     - No manual interaction required
+   
+   - **If auto-export disabled** (manual fallback):
+     ```
+     ──────────────────────────────────────────────────────────────────
+     📤 EXPORT NOW:
+        File → Export Audio/Video
+        Rendered Track = Master
+        Normalize = OFF
+        Filename: output/master_iter7.wav
+     ──────────────────────────────────────────────────────────────────
+     Press Enter after export completes...
+     ```
 
 7. **Wait for file** to appear and stabilize:
    - Poll every 0.5s
-   - Wait for 3 consecutive stable size checks
-   - Timeout after 30s
+   - Wait for 2 consecutive stable size/mtime checks
+   - Timeout after 600s (configurable)
 
 ### Phase 3: Verify + Log (Automated)
 
@@ -179,8 +211,10 @@ flaas experiment-run data/experiments/master_sweep.json
 
 Runner halts immediately when:
 - ✅ **Success**: `pass_lufs == true` AND `pass_peak == true`
-- ✗ **File timeout**: WAV missing/unstable after 30s (logs error, continues to next)
+- ✗ **Export failure**: Auto-export fails or file timeout (logs error, continues to next)
 - ✗ **OSC write failure**: Parameter set fails (prints failing endpoint + args, exits 30)
+
+**Export failures logged**: Experiments that fail export are logged with `"status": "export_failed"` and error details
 
 ---
 
@@ -281,30 +315,33 @@ EXPERIMENT 2/3: iter8
 - Per experiment: Configure (2 min) + Export (30s) + Verify (30s) = 3 min
 - Total: 10 × 3 min = **30 min**
 
-**Semi-automated workflow** (10 experiments):
-- Per experiment: Auto-configure (5s) + Export (30s) + Auto-verify (5s) = 40s
+**Fully automated workflow** (10 experiments, macOS):
+- Per experiment: Auto-configure (5s) + Auto-export (30s) + Auto-verify (5s) = 40s
 - Total: 10 × 40s = **7 min** (assuming no early exit)
 - With early exit on success: **< 7 min**
 
-**Speedup**: ~4-5x (even with manual export click)
+**Speedup**: ~4-5x (compared to manual)
 
-**If export were automated**: ~15x speedup
+**With manual export** (non-macOS or permissions disabled):
+- Per experiment: Auto-configure (5s) + Manual export (30s) + Auto-verify (5s) = 40s
+- Still ~4-5x faster (only export click is manual)
 
 ---
 
-## Limitations
+## Capabilities
 
-**Not automated**:
-- Export trigger (manual File → Export click required)
-- Master fader (falls back to manual if OSC fails)
+**Fully automated (macOS with permissions)**:
+- ✅ Device resolution (by name, runtime)
+- ✅ Parameter resolution (by name, runtime)
+- ✅ Parameter setting (dB → normalized conversion)
+- ✅ Export trigger (via AppleScript UI automation)
+- ✅ File waiting (stabilization check)
+- ✅ Verification (LUFS, peak, pass/fail)
+- ✅ Logging (JSONL with SHA256)
 
-**Automated**:
-- Device resolution (by name, runtime)
-- Parameter resolution (by name, runtime)
-- Parameter setting (dB → normalized conversion)
-- File waiting (stabilization check)
-- Verification (LUFS, peak, pass/fail)
-- Logging (JSONL with SHA256)
+**Manual fallback**:
+- ⚠️ Master fader (no OSC endpoint, manual prompt before run)
+- ⚠️ Export (if auto-export disabled or permissions missing)
 
 ---
 

@@ -5,6 +5,10 @@
   "target_lufs": -10.5,
   "peak_limit_dbfs": -6.0,
   "master_track_id": -1000,
+  "auto_export": {
+    "enabled": true,
+    "timeout_s": 600
+  },
   "device_names": {
     "glue": "Glue Compressor",
     "limiter": "Limiter"

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import sys
 import json
 import hashlib
 import time
@@ -11,6 +12,10 @@ from flaas.analyze import analyze_wav
 from flaas.check import check_wav
 from flaas.targets import DEFAULT_TARGETS
 from pythonosc.udp_client import SimpleUDPClient
+
+# UI automation for macOS
+if sys.platform == "darwin":
+    from flaas.ui_export_macos import auto_export_wav
 
 
 @dataclass
@@ -158,7 +163,7 @@ def set_master_fader(
     print(f"  Manually set Master fader to 0.0 dB in Ableton and press Enter")
 
 
-def wait_for_file(path: Path, timeout_sec: float = 30.0) -> bool:
+def wait_for_file(path: Path, timeout_sec: float = 600.0) -> bool:
     """
     Wait for file to appear and size to stabilize.
     
@@ -229,6 +234,11 @@ def experiment_run(
     limiter_name = device_names.get("limiter", "Limiter")
     runs = config_data.get("runs", [])
     
+    # Auto-export config (default enabled on macOS)
+    auto_export_config = config_data.get("auto_export", {})
+    auto_export_enabled = auto_export_config.get("enabled", sys.platform == "darwin")
+    auto_export_timeout = auto_export_config.get("timeout_s", 600)
+    
     if not runs:
         print("ERROR: No runs defined in config")
         return 20
@@ -260,6 +270,15 @@ def experiment_run(
     # Prepare output log
     log_path = Path("output/experiments.jsonl")
     log_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Print auto-export status
+    if auto_export_enabled:
+        print(f"\n✅ Auto-export ENABLED (macOS UI automation)")
+        print(f"   Export will be triggered automatically via AppleScript")
+        print(f"   Timeout: {auto_export_timeout}s")
+    else:
+        print(f"\n⚠ Auto-export DISABLED (manual export required)")
+        print(f"   You will be prompted to export manually")
     
     # Run experiments
     success_count = 0
@@ -329,24 +348,65 @@ def experiment_run(
             )
             print(f"    ✓ {key} set")
         
-        # Pause for manual export
-        print(f"\n{'─'*70}")
-        print(f"📤 EXPORT NOW:")
-        print(f"   File → Export Audio/Video")
-        print(f"   Rendered Track = Master")
-        print(f"   Normalize = OFF")
-        print(f"   Filename: {export_file}")
-        print(f"{'─'*70}")
-        input("Press Enter after export completes...")
+        # Export (auto or manual)
+        export_path = Path(export_file).absolute()
+        export_success = False
+        export_error = None
         
-        # Wait for file to stabilize
-        export_path = Path(export_file)
-        print(f"\nWaiting for {export_path.name} to stabilize...")
-        if not wait_for_file(export_path, timeout_sec=30.0):
-            print(f"  ✗ File did not appear or stabilize within 30s")
-            print(f"  Skipping verification for {exp_id}")
+        if auto_export_enabled:
+            # Automatic export via UI automation
+            print(f"\n{'─'*70}")
+            print(f"📤 AUTO-EXPORTING: {export_path.name}")
+            print(f"{'─'*70}")
+            
+            try:
+                auto_export_wav(export_path, timeout_s=auto_export_timeout)
+                print(f"  ✓ Export complete, file ready")
+                export_success = True
+            except RuntimeError as e:
+                print(f"  ✗ Auto-export failed: {e}")
+                export_error = str(e)
+            except Exception as e:
+                print(f"  ✗ Unexpected error during auto-export: {e}")
+                export_error = str(e)
+        else:
+            # Manual export
+            print(f"\n{'─'*70}")
+            print(f"📤 EXPORT NOW:")
+            print(f"   File → Export Audio/Video")
+            print(f"   Rendered Track = Master")
+            print(f"   Normalize = OFF")
+            print(f"   Filename: {export_file}")
+            print(f"{'─'*70}")
+            input("Press Enter after export completes...")
+            
+            # Wait for file to stabilize
+            print(f"\nWaiting for {export_path.name} to stabilize...")
+            if wait_for_file(export_path, timeout_sec=auto_export_timeout):
+                print(f"  ✓ File ready")
+                export_success = True
+            else:
+                print(f"  ✗ File did not appear or stabilize within {auto_export_timeout}s")
+                export_error = f"File timeout ({auto_export_timeout}s)"
+        
+        # If export failed, log and continue
+        if not export_success:
+            log_entry = {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "id": exp_id,
+                "export_file": str(export_file),
+                "status": "export_failed",
+                "error": export_error,
+                "params": {
+                    "master_fader_db": 0.0,
+                    "glue": glue_settings,
+                    "limiter": limiter_settings,
+                },
+            }
+            with log_path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(log_entry) + "\n")
+            print(f"  ✓ Logged failure to {log_path}")
             continue
-        print(f"  ✓ File ready")
         
         # Verify audio
         print(f"\nVerifying {export_path.name}...")
