@@ -1,0 +1,6 @@
+ableton:
+  host: "127.0.0.1"
+  port_in: 11000
+  port_out: 11001
+  timeout_s: 1.0
+  retries: 2
