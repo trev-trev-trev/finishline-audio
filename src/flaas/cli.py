@@ -20,6 +20,7 @@ def main() -> None:
     ping.add_argument("--wait", action="store_true", help="Wait for /live/test reply on 11001")
     ping.add_argument("--listen-port", type=int, default=11001)
     ping.add_argument("--timeout", type=float, default=2.0)
+    ping.add_argument("--arg", default="ok", help="Argument sent to /live/test (default: ok)")
 
     scan = sub.add_parser("scan", help="Write model_cache.json (stub for now)")
     scan.add_argument("--out", default="data/caches/model_cache.json")
@@ -50,13 +51,13 @@ def main() -> None:
             resp = request_once(
                 RpcTarget(host=args.host, port=args.port),
                 "/live/test",
-                1,
+                args.arg,
                 listen_port=args.listen_port,
                 timeout_sec=args.timeout,
             )
             print(f"ok: {resp}")
         else:
-            send_ping(FireAndForgetTarget(host=args.host, port=args.port))
+            send_ping(FireAndForgetTarget(host=args.host, port=args.port), value=args.arg)
             print("sent")
         return
 
