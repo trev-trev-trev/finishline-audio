@@ -1,0 +1,2 @@
+[console_scripts]
+flaas = flaas.cli:main

@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: flaas
+Version: 0.0.1
+Summary: Finish Line Audio Automation System
+Requires-Python: >=3.11
+Requires-Dist: python-osc>=1.8.3
+Requires-Dist: numpy>=1.26
+Requires-Dist: soundfile>=0.12
+Requires-Dist: pyloudnorm>=0.1.1
