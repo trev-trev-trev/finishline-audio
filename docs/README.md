@@ -48,6 +48,7 @@ flaas scan
 4. Reference `reference/ENGINEERING_NOTEBOOK.md` for implementation details
 
 ### For Understanding the System
+- **Operating manual**: `project/operating-manual-v1.md` ⭐⭐ **UNIFIED DAILY REFERENCE**
 - **Product spec**: `project/spec-v1.md` ⭐ **Complete vision + build strategy**
 - **Project vision**: `project/VISION.md`
 - **Architecture**: `architecture/TECHNICAL_CONSIDERATIONS.md`

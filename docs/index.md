@@ -8,9 +8,9 @@
 
 New to the project? Read these in order:
 
-1. **[docs/README.md](README.md)** - Documentation overview and navigation
+1. **[project/operating-manual-v1.md](project/operating-manual-v1.md)** ⭐⭐ **UNIFIED DAILY REFERENCE**
 2. **[reference/FINISHLINE_PROGRESS_INDEX.md](reference/FINISHLINE_PROGRESS_INDEX.md)** - Current technical state
-3. **[workflow/protocol.md](workflow/protocol.md)** - How this project was built (one-task loop)
+3. **[workflow/execution-system.md](workflow/execution-system.md)** - Deterministic FSM
 4. **[workflow/terminal-cheatsheet.md](workflow/terminal-cheatsheet.md)** - Command reference
 
 ---
@@ -47,6 +47,7 @@ New to the project? Read these in order:
 ## All Documents
 
 ### Project (Vision & Planning)
+- [operating-manual-v1.md](project/operating-manual-v1.md) ⭐⭐ **UNIFIED DAILY REFERENCE**
 - [spec-v1.md](project/spec-v1.md) ⭐ **Complete Product & Systems Spec**
 - [VISION.md](project/VISION.md)
 - [PHILOSOPHY_ALIGNMENT_CHECK.md](project/PHILOSOPHY_ALIGNMENT_CHECK.md)
