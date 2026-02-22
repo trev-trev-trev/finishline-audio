@@ -28,6 +28,7 @@ source .venv/bin/activate
 
 **All documentation has been reorganized** into `docs/`. Start here:
 
+- **[docs/project/spec-v1.md](docs/project/spec-v1.md)** - Product & systems architecture specification ⭐
 - **[docs/README.md](docs/README.md)** - Documentation overview and navigation
 - **[docs/workflow/protocol.md](docs/workflow/protocol.md)** - How this project was built (one-task terminal loop)
 - **[docs/workflow/terminal-cheatsheet.md](docs/workflow/terminal-cheatsheet.md)** - Command reference and troubleshooting

@@ -45,6 +45,7 @@ New to the project? Read these in order:
 ## All Documents
 
 ### Project (Vision & Planning)
+- [spec-v1.md](project/spec-v1.md) ⭐ **Complete Product & Systems Spec**
 - [VISION.md](project/VISION.md)
 - [PHILOSOPHY_ALIGNMENT_CHECK.md](project/PHILOSOPHY_ALIGNMENT_CHECK.md)
 - [PLAN_SUMMARY.md](project/PLAN_SUMMARY.md)
