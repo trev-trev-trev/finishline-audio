@@ -25,6 +25,7 @@ from flaas.eq8_reset_gains import eq8_reset_gains
 from flaas.device_map import generate_device_map
 from flaas.limiter_set import limiter_set
 from flaas.device_set_safe_param import device_set_safe_param
+from flaas.experiment_run import experiment_run
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -191,6 +192,11 @@ def main() -> None:
     dsp.add_argument("--timeout", type=float, default=5.0)
     dsp.add_argument("--host", default="127.0.0.1")
     dsp.add_argument("--port", type=int, default=11000)
+
+    exp_run = sub.add_parser("experiment-run", help="Run batch experiment from config (interactive)")
+    exp_run.add_argument("config", help="Path to experiment config JSON")
+    exp_run.add_argument("--host", default="127.0.0.1")
+    exp_run.add_argument("--port", type=int, default=11000)
 
     args = p.parse_args()
 
@@ -360,6 +366,13 @@ def main() -> None:
     if args.cmd == "limiter-set":
         limiter_set(track_id=args.track_id, device_id=args.device_id, param=args.param, value=args.value, target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout, dry=args.dry)
         return
+    
+    if args.cmd == "experiment-run":
+        code = experiment_run(
+            config_path=args.config,
+            target=RpcTarget(host=args.host, port=args.port),
+        )
+        raise SystemExit(code)
 
     p.print_help()
 

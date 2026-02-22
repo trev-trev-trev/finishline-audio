@@ -1,0 +1,32 @@
+{
+  "render_track": "Master",
+  "loop": "selection",
+  "normalize": false,
+  "target_lufs": -10.5,
+  "peak_limit_dbfs": -6.0,
+  "master_track_id": -1000,
+  "device_names": {
+    "glue": "Glue Compressor",
+    "limiter": "Limiter"
+  },
+  "runs": [
+    {
+      "id": "iter7",
+      "export_file": "output/master_iter7.wav",
+      "glue": { "threshold_db": -30.0, "makeup_db": 15.0 },
+      "limiter": { "ceiling_db": -6.5, "gain_db": 28.0 }
+    },
+    {
+      "id": "iter8",
+      "export_file": "output/master_iter8.wav",
+      "glue": { "threshold_db": -32.0, "makeup_db": 18.0 },
+      "limiter": { "ceiling_db": -6.5, "gain_db": 30.0 }
+    },
+    {
+      "id": "iter9",
+      "export_file": "output/master_iter9.wav",
+      "glue": { "threshold_db": -35.0, "makeup_db": 20.0 },
+      "limiter": { "ceiling_db": -6.5, "gain_db": 32.0 }
+    }
+  ]
+}
