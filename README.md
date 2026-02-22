@@ -4,12 +4,14 @@ Control Ableton Live via OSC for automated audio processing workflows.
 
 ## Status
 
-**Current**: Troubleshooting export crash. See `STATE.md`.
+**Current**: Export loop functional. Manual iteration working. See `STATE.md`.
 
 ## Documentation
 
+- `START_HERE.md` - Entry point for new sessions
 - `STATE.md` - Current operational state
 - `QUICKSTART.md` - Quick reference
+- `docs/reference/EXPORT_FINDINGS.md` - Export triage results (16 experiments)
 - `docs/status/STATUS.md` - Operating procedures
 
 ## Quick Commands
