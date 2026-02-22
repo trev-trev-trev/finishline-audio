@@ -14,6 +14,7 @@ from flaas.export_guide import print_export_guide
 from flaas.verify_audio import verify_audio
 from flaas.inspect_selected_device import inspect_selected_device
 from flaas.eq8_set_param import eq8_set_param
+from flaas.inspect_selected_track import inspect_selected_track
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -96,6 +97,12 @@ def main() -> None:
     eq8.add_argument("--dry", action="store_true", help="Preview only, no write")
     eq8.add_argument("--host", default="127.0.0.1")
     eq8.add_argument("--port", type=int, default=11000)
+
+    ist = sub.add_parser("inspect-selected-track", help="Print device list for selected track")
+    ist.add_argument("--timeout", type=float, default=5.0)
+    ist.add_argument("--raw", action="store_true", help="Print raw OSC tuples")
+    ist.add_argument("--host", default="127.0.0.1")
+    ist.add_argument("--port", type=int, default=11000)
 
     args = p.parse_args()
 
@@ -182,6 +189,10 @@ def main() -> None:
 
     if args.cmd == "eq8-set-param":
         eq8_set_param(param_id=args.param_id, value=args.value, target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout, dry=args.dry)
+        return
+
+    if args.cmd == "inspect-selected-track":
+        inspect_selected_track(target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout, raw=args.raw)
         return
 
     p.print_help()
