@@ -31,27 +31,34 @@ make write       # 39s, commit gate
 # Audio verification
 flaas verify-audio <wav>  # Check LUFS/peak vs targets
 
-# Semi-automated experiments (NEW)
-flaas experiment-run <config.json>  # Batch parameter sweep
+# Automated mastering (NEW)
+flaas master-candidates           # Generate 3 curated masters (zero clicks)
+flaas experiment-run <config.json>  # Custom parameter sweep
 ```
 
 ## Next Action (Fully Automated)
 
-**Run batch experiment** (3 runs, no manual clicks):
+**Generate 3 master candidates** (zero clicks):
 ```bash
-flaas experiment-run data/experiments/master_sweep.json
+flaas master-candidates
 ```
 
 **What happens**:
-1. Auto-sets params (Glue, Limiter) via OSC
-2. Auto-exports via macOS UI automation (no clicks)
-3. Auto-verifies LUFS/peak
-4. Logs to `output/experiments.jsonl`
-5. Early exit on success
+1. Iterative threshold search per candidate (up to 6 iterations each)
+2. Auto-sets params (Glue, Limiter) via OSC
+3. Auto-exports via macOS UI automation (no clicks)
+4. Auto-verifies LUFS/peak
+5. Logs to `output/master_candidates.jsonl`
+6. Stops each candidate when targets hit
 
-**Config**: GR 12-18 dB, Makeup 15-20 dB, Limiter 28-32 dB
+**Outputs**: 3 WAV files (consensus, variant_a, variant_b)
 
-**Goal**: Close 3.09 LU gap (-13.59 → -10.50)
+**Goal**: Generate 3 Spotify-ready masters from current 8-bar loop
+
+**Alternative - Custom sweep**:
+```bash
+flaas experiment-run data/experiments/master_sweep.json
+```
 
 **macOS Permissions Required** (one-time):
 - System Settings → Privacy & Security → Accessibility → Terminal ON

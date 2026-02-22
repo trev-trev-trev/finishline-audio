@@ -26,6 +26,7 @@ from flaas.device_map import generate_device_map
 from flaas.limiter_set import limiter_set
 from flaas.device_set_safe_param import device_set_safe_param
 from flaas.experiment_run import experiment_run
+from flaas.master_candidates import master_candidates
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -197,6 +198,11 @@ def main() -> None:
     exp_run.add_argument("config", help="Path to experiment config JSON")
     exp_run.add_argument("--host", default="127.0.0.1")
     exp_run.add_argument("--port", type=int, default=11000)
+
+    master_cand = sub.add_parser("master-candidates", help="Generate 3 curated master candidates (auto-export)")
+    master_cand.add_argument("--host", default="127.0.0.1")
+    master_cand.add_argument("--port", type=int, default=11000)
+    master_cand.add_argument("--no-auto-export", action="store_true", help="Disable auto-export (manual)")
 
     args = p.parse_args()
 
@@ -371,6 +377,13 @@ def main() -> None:
         code = experiment_run(
             config_path=args.config,
             target=RpcTarget(host=args.host, port=args.port),
+        )
+        raise SystemExit(code)
+    
+    if args.cmd == "master-candidates":
+        code = master_candidates(
+            target=RpcTarget(host=args.host, port=args.port),
+            auto_export_enabled=(not args.no_auto_export),
         )
         raise SystemExit(code)
 
