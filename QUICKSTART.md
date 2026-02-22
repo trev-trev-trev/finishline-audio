@@ -2,13 +2,15 @@
 
 **Repo**: `/Users/trev/Repos/finishline_audio_repo`
 
-## Current Blocker
+## Current Status
 
-**Export crash** prevents closed-loop audio iteration loop.
+**Export loop WORKING** ✅ Manual iteration functional
 
-**Loop**: `plan-gain → apply → export → verify-audio → repeat`
+**Latest**: LUFS -13.59, Peak -6.00 (gap to target: 3.09 LU)
 
-**Must fix before**: Endpoint expansion / command generation
+**Loop**: `configure → export → verify-audio → adjust → repeat`
+
+**Next**: Close LUFS gap via compression tuning
 
 ## Key Files (Priority Order)
 
@@ -26,21 +28,21 @@ make smoke       # 7s, read-only
 make write-fast  # 9s, dev gate
 make write       # 39s, commit gate
 
-# Master workflow (gain applied: -0.750)
-flaas verify              # Check gain (returns 0.125000)
-flaas plan-gain <wav>     # Calculate delta
-flaas apply --actions <j> # Apply delta
+# Audio verification
+flaas verify-audio <wav>  # Check LUFS/peak vs targets
 ```
 
 ## Next Action (Manual)
 
-**In Ableton**:
-1. Track 41: Disable ValhallaSpaceModulator (device 1)
-2. Track 41: Disable StudioVerse (device 2)
-3. Set loop brace to 4-8 bars
-4. Export Master → Selection/Loop only → `output/master_iter1.wav`
+**In Ableton** (Master chain tuning):
+1. Glue Compressor: Lower Threshold → GR 15-18 dB
+2. Glue Compressor: Makeup +15-18 dB
+3. Limiter: Gain +28-30 dB, Ceiling -6.5 dB
+4. Export Master (loop) → `output/master_iter<N>.wav`
 
-**After export succeeds**:
+**After export**:
 ```bash
-flaas verify-audio output/master_iter1.wav
+flaas verify-audio output/master_iter<N>.wav
 ```
+
+**See detailed workflow**: `docs/reference/EXPORT_FINDINGS.md`
