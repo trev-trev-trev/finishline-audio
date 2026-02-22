@@ -1,0 +1,24 @@
+[project]
+name = "flaas"
+version = "0.0.1"
+description = "Finish Line Audio Automation System"
+requires-python = ">=3.11"
+dependencies = [
+  "python-osc>=1.8.3",
+  "numpy>=1.26",
+  "soundfile>=0.12",
+  "pyloudnorm>=0.1.1",
+]
+
+[project.scripts]
+flaas = "flaas.cli:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
