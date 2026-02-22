@@ -80,15 +80,16 @@ def compute_sha256(path: Path) -> str:
 def master_consensus(
     target: OscTarget = OscTarget(),
     auto_export_enabled: bool = True,
-    target_lufs: float = -9.0,  # Louder target (competitive streaming)
+    target_lufs: float = -8.0,  # MAXIMUM competitive loudness (Spotify/Apple Music ceiling)
     peak_limit: float = -6.0,
 ) -> int:
     """
-    Generate ONE high-quality consensus master with iterative optimization.
+    Generate ONE high-quality consensus master with MAXIMUM loudness optimization.
     
     Strategy:
-    - Start aggressive: High compression (GR 15-18 dB), high makeup (20 dB), high limiter gain (35 dB)
-    - Iterate up to 10 times to hit LUFS target (-9.0) while maintaining peak safety
+    - Start VERY aggressive: Heavy compression (GR 18-20 dB), high makeup (25 dB), max limiter gain (40 dB)
+    - Iterate up to 15 times to hit LUFS target (-8.0) while maintaining peak safety
+    - Push loudness as hard as possible (streaming service ceiling)
     - Adjust threshold, makeup, and limiter gain dynamically based on results
     
     Output: output/master_consensus.wav
@@ -102,10 +103,11 @@ def master_consensus(
     log_path.parent.mkdir(parents=True, exist_ok=True)
     
     print("="*70)
-    print("MASTER CONSENSUS: Single High-Quality Master Generation")
+    print("MASTER CONSENSUS: MAXIMUM LOUDNESS OPTIMIZATION")
     print("="*70)
-    print(f"\nTarget: LUFS {target_lufs:.1f} (competitive streaming loudness)")
+    print(f"\nTarget: LUFS {target_lufs:.1f} (MAXIMUM competitive loudness)")
     print(f"Peak limit: {peak_limit:.1f} dBFS")
+    print(f"Strategy: Push as loud as possible for streaming services")
     print(f"")
     
     # Resolve devices
@@ -142,23 +144,25 @@ def master_consensus(
     print(f"{'─'*70}")
     input("Press Enter to start optimization...")
     
-    # Starting parameters (aggressive for loudness)
-    threshold = -35.0  # Start with strong compression
-    makeup = 22.0      # High makeup for loudness
-    ratio = 5.0        # Moderate-high ratio
-    attack = 8.0       # Fast attack for control
-    limiter_ceiling = -6.2  # Slight margin
-    limiter_gain = 36.0     # Aggressive gain
+    # Starting parameters (VERY aggressive for maximum loudness)
+    threshold = -40.0  # HEAVY compression (GR 18-20 dB target)
+    makeup = 25.0      # MAXIMUM makeup for output level
+    ratio = 6.0        # Strong ratio for consistent level
+    attack = 5.0       # Fast attack for tight control
+    limiter_ceiling = -6.1  # Tight margin
+    limiter_gain = 40.0     # MAXIMUM gain (at limiter limit)
     
-    print(f"\nStarting parameters (aggressive for loudness):")
-    print(f"  Glue: Threshold {threshold:.1f} dB, Makeup {makeup:.1f} dB, Ratio {ratio:.1f}:1, Attack {attack:.1f} ms")
-    print(f"  Limiter: Ceiling {limiter_ceiling:.1f} dB, Gain {limiter_gain:.1f} dB")
+    print(f"\nStarting parameters (MAXIMUM loudness strategy):")
+    print(f"  Glue: Threshold {threshold:.1f} dB (heavy compression)")
+    print(f"  Glue: Makeup {makeup:.1f} dB (maximum output)")
+    print(f"  Glue: Ratio {ratio:.1f}:1, Attack {attack:.1f} ms")
+    print(f"  Limiter: Ceiling {limiter_ceiling:.1f} dB, Gain {limiter_gain:.1f} dB (maximum)")
     print(f"")
     
     best_result = None
     best_distance = float('inf')
     
-    for iteration in range(1, 11):  # Up to 10 iterations
+    for iteration in range(1, 16):  # Up to 15 iterations for convergence
         print(f"\n{'─'*70}")
         print(f"ITERATION {iteration}/10")
         print(f"{'─'*70}")
@@ -237,8 +241,8 @@ def master_consensus(
                 best_result = iter_log
                 print(f"  ✅ BEST SO FAR (distance {lufs_distance:.2f})")
             
-            # Check convergence (LUFS within 0.3 LU of target, peak safe)
-            if peak_safe and lufs_distance <= 0.3:
+            # Check convergence (LUFS within 0.5 LU of target, peak safe)
+            if peak_safe and lufs_distance <= 0.5:
                 print(f"\n{'='*70}")
                 print(f"✅ CONVERGENCE ACHIEVED")
                 print(f"  LUFS: {analysis.lufs_i:.2f} (target {target_lufs:.1f})")
@@ -263,28 +267,34 @@ def master_consensus(
                 print(f"    → Reducing limiter gain to {limiter_gain:.1f} dB")
             
             elif analysis.lufs_i < target_lufs:
-                # Too quiet - need more loudness
+                # Too quiet - need MORE LOUDNESS (push harder)
                 lufs_gap = target_lufs - analysis.lufs_i
-                print(f"    Too quiet (gap {lufs_gap:.2f} LU)")
+                print(f"    ⚠️  TOO QUIET (gap {lufs_gap:.2f} LU) - PUSHING LOUDER")
                 
-                if lufs_gap > 2.0:
-                    # Large gap: aggressive adjustment
-                    print(f"    → Large gap: lowering threshold by 4 dB, adding 2 dB makeup, adding 3 dB limiter gain")
-                    threshold -= 4.0  # More compression
-                    makeup += 2.0     # More output
-                    limiter_gain += 3.0  # More final gain
+                if lufs_gap > 3.0:
+                    # Huge gap: MAXIMUM push
+                    print(f"    → HUGE gap: threshold -6 dB, makeup +3 dB, limiter gain +4 dB")
+                    threshold -= 6.0  # HEAVY compression
+                    makeup += 3.0     # MAXIMUM output
+                    limiter_gain += 4.0  # MAXIMUM final gain
+                elif lufs_gap > 2.0:
+                    # Large gap: Very aggressive
+                    print(f"    → Large gap: threshold -5 dB, makeup +2.5 dB, limiter gain +3.5 dB")
+                    threshold -= 5.0
+                    makeup += 2.5
+                    limiter_gain += 3.5
                 elif lufs_gap > 1.0:
-                    # Medium gap: moderate adjustment
-                    print(f"    → Medium gap: lowering threshold by 2.5 dB, adding 1.5 dB makeup, adding 2 dB limiter gain")
-                    threshold -= 2.5
-                    makeup += 1.5
-                    limiter_gain += 2.0
+                    # Medium gap: aggressive
+                    print(f"    → Medium gap: threshold -3.5 dB, makeup +2 dB, limiter gain +2.5 dB")
+                    threshold -= 3.5
+                    makeup += 2.0
+                    limiter_gain += 2.5
                 else:
-                    # Small gap: gentle adjustment
-                    print(f"    → Small gap: lowering threshold by 1.5 dB, adding 1 dB makeup, adding 1 dB limiter gain")
-                    threshold -= 1.5
-                    makeup += 1.0
-                    limiter_gain += 1.0
+                    # Small gap: moderate push
+                    print(f"    → Small gap: threshold -2 dB, makeup +1.5 dB, limiter gain +1.5 dB")
+                    threshold -= 2.0
+                    makeup += 1.5
+                    limiter_gain += 1.5
             
             elif analysis.lufs_i > target_lufs:
                 # Too loud (rare, but possible)
