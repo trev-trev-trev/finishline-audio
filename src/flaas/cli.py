@@ -8,6 +8,7 @@ from flaas.check import write_check
 from flaas.plan import write_plan_gain_actions
 from flaas.apply import apply_actions_dry_run, apply_actions_osc
 from flaas.util import set_utility_gain_norm, set_utility_gain_linear
+from flaas.loop import run_loop
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -57,6 +58,9 @@ def main() -> None:
     ugl.add_argument("gain_linear", type=float)
     ugl.add_argument("--host", default="127.0.0.1")
     ugl.add_argument("--port", type=int, default=11000)
+
+    lp = sub.add_parser("loop", help="analyze -> plan-gain -> apply (manual export/verify)")
+    lp.add_argument("wav")
 
     args = p.parse_args()
 
@@ -114,6 +118,10 @@ def main() -> None:
     if args.cmd == "util-gain-linear":
         set_utility_gain_linear(args.track_id, args.device_id, args.gain_linear, target=RpcTarget(host=args.host, port=args.port))
         print("sent")
+        return
+
+    if args.cmd == "loop":
+        run_loop(args.wav)
         return
 
     p.print_help()
