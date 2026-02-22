@@ -62,6 +62,7 @@ def main() -> None:
 
     lp = sub.add_parser("loop", help="analyze -> plan-gain -> apply (manual export/verify)")
     lp.add_argument("wav")
+    lp.add_argument("--dry", action="store_true")
 
     vf = sub.add_parser("verify", help="Read back master Utility gain normalized")
     vf.add_argument("--track-id", type=int, default=0)
@@ -128,7 +129,7 @@ def main() -> None:
         return
 
     if args.cmd == "loop":
-        run_loop(args.wav)
+        run_loop(args.wav, dry=args.dry)
         return
 
     if args.cmd == "verify":
