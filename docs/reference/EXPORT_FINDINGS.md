@@ -170,25 +170,57 @@
 
 ---
 
-## Future Automation Potential
+## Automation Feasibility (Verified)
 
-**Current**: Manual export + manual adjustment
+**Export trigger**: ❌ NOT available via OSC
 
-**Future**: Python-controlled master processing
-- Query master fader level
-- Set master fader to 0.0
-- Control Glue Compressor params (threshold, makeup, ratio)
-- Control Limiter params (ceiling, gain, release)
-- Export via OSC (if available)
-- Auto-adjust based on verify-audio results
+**Probe result**: `/live/song/export/structure` returns `(1,)` (status flag, not actionable)
 
-**Required OSC endpoints**:
+**Prior probe**: `/live/song/export/audio` timed out (endpoint doesn't exist)
+
+**Conclusion**: Export remains manual (File → Export Audio/Video click required)
+
+---
+
+## Semi-Automated Workflow (Feasible)
+
+### What CAN be automated:
+1. **Parameter control** (Glue Compressor, Limiter, Master fader)
+2. **Verification** (`verify-audio` post-export)
+3. **Logging** (settings + results → `experiments.jsonl`)
+
+### What CANNOT be automated:
+- **Export trigger** (manual click required per experiment)
+
+### Batch Experiment Runner (Proposed)
+
+**Command**: `flaas batch-experiment experiments.json`
+
+**Flow**:
+```python
+for exp in experiments:
+    # Automated
+    set_glue_params(exp.threshold, exp.makeup, exp.ratio)
+    set_limiter_params(exp.ceiling, exp.gain)
+    set_master_fader(0.0)
+    
+    # Manual (PAUSE)
+    print(f"Export to output/exp_{exp.id}.wav")
+    input("Press Enter after export completes...")
+    
+    # Automated
+    result = verify_audio(f"output/exp_{exp.id}.wav")
+    log_experiment(exp.id, exp.settings, result)
+```
+
+**ROI**: 10-100x faster than fully manual (only export click is manual)
+
+**Required OSC endpoints** (all available):
 - `/live/track/get/volume` (master fader)
 - `/live/track/set/volume` (master fader)
 - `/live/device/set/parameter/value` (Glue + Limiter params)
-- `/live/song/export/*` (if available for scripted export)
 
-**See**: `docs/ENDPOINT_REGISTRY.json` for endpoint specifications
+**See**: `docs/reference/EXPORT_AUTOMATION_FEASIBILITY.md` for probe details
 
 ---
 
