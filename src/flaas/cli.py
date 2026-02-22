@@ -77,7 +77,7 @@ def main() -> None:
     args = p.parse_args()
 
     if args.version:
-        print("0.0.1")
+        print("0.0.2")
         return
 
     if args.cmd == "ping":
