@@ -70,11 +70,13 @@ cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate
 
 **See `STATE.md` for complete operational details.**
 
-**Current task**: Troubleshoot Ableton export crash (disable third-party plugins)
+**Current task**: Close LUFS gap (3.09 LU remaining) via compression tuning
 
-**Applied state**: Master Utility gain at -0.750 linear (delta +0.250 applied, not reset)
+**Applied state**: Master chain validated (Glue Compressor → Limiter), Master fader 0.0 dB
 
-**Blocker**: Export crashes with third-party plugins (Valhalla, StudioVerse)
+**Latest result**: LUFS -13.59, Peak -6.00 (experiment #14)
+
+**Status**: Export loop functional ✅
 
 ---
 
@@ -94,7 +96,9 @@ cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate
 
 **Master track**: track_id=-1000 (NOT 0)  
 **Device resolution**: Query `/live/track/get/devices/name`, response is `(track_id, name0, name1, ...)`, skip first element  
-**Export crash**: Third-party plugins cause hang, disable first
+**Master fader**: Post-device chain, must be 0.0 dB for predictable peak control  
+**Limiter alone insufficient**: Need compression before limiter for loudness  
+**Export settings**: Rendered Track = Master, Normalize = OFF
 
 ---
 
@@ -155,47 +159,49 @@ Type a command.
 
 ### NEXT ACTION
 
-**Task**: Troubleshoot Ableton export crash (render-path stability issue)
+**Task**: Close LUFS gap (manual compression tuning)
 
-**Priority**: Execute in order, stop when export succeeds
+**Status**: Export loop functional ✅ (16 experiments complete)
 
-**Step 1: Shortest export test (4-8 bars)**
-1. In Ableton: Set Loop brace over 4-8 bars
-2. Export Master → Selection/Loop only
-3. If crashes: It's a hang, proceed to Step 2
-4. If succeeds: Test full-length export
+**Current gap**: 3.09 LU (-13.59 → -10.50 LUFS)
 
-**Step 2: Plugin isolation (most common cause)**
+**Best result so far**: LUFS -13.59, Peak -6.00 (experiment #14)
+
+**Step 1: Tune compression (in Ableton)**
+1. Master chain: `[Utility] → [EQ Eight] → [Glue Compressor] → [Limiter]`
+2. Master fader: 0.0 dB (critical for peak control)
+3. Glue Compressor:
+   - Lower Threshold → GR 15-18 dB
+   - Makeup +15-18 dB
+4. Limiter:
+   - Gain +28-30 dB
+   - Ceiling -6.5 dB
+
+**Step 2: Export**
+- File → Export Audio/Video
+- Rendered Track = Master
+- Normalize = OFF
+- File: `output/master_iter<N>.wav`
+
+**Step 3: Verify**
 ```bash
-# Manual step in Ableton:
-# 1. Disable/bypass ALL third-party plugins:
-#    - ValhallaSpaceModulator (track 41, device 1)
-#    - StudioVerse Audio Effects Stereo (track 41, device 2)
-# 2. Keep only built-in devices (EQ Eight, Utility, Limiter)
-# 3. Re-run 4-8 bar export
-# 4. If works: Re-enable plugins one at a time to find culprit
+flaas verify-audio output/master_iter<N>.wav
 ```
 
-**Step 3: Workaround (if plugins are culprit)**
-- Freeze/flatten tracks with crashing plugins
-- Create new "PRINT" Live set with audio stems only
-- Export from clean set
-
-**Step 4: System-level (if still crashes)**
-- Increase audio buffer: Preferences → Audio → Buffer Size 2048 or 4096
-- Validate render settings (Start/Length not blank)
-- Check disk space, export to local folder
-- Update Ableton Live to latest patch
+**Step 4: Adjust**
+- Peak > -6.0: Reduce limiter gain OR lower ceiling
+- LUFS < -10.5: Increase compression OR increase limiter gain
+- Repeat
 
 **Expected outcome**: 
-- Identify crashing plugin (likely Valhalla or StudioVerse)
-- Successfully export short test file
-- Validate gain adjustment workflow works
+- Hit targets: LUFS -10.50, Peak -6.00
+- Validate compression + limiter strategy
 
 **On success**: 
-- Export `output/master_iter1.wav` with gain applied
-- Run `flaas verify-audio output/master_iter1.wav`
-- Confirm LUFS/peak changes from gain adjustment
+- Document final settings
+- Begin master processing automation (OSC control for Glue/Limiter)
+
+**See detailed workflow**: `docs/reference/EXPORT_FINDINGS.md`
 
 ---
 
@@ -247,7 +253,9 @@ After probe: ONE action (read/edit/run), then stop.
 
 **See `STATE.md` for complete issue list and workarounds.**
 
-**Current**: Export crash → disable third-party plugins → test 4-8 bars
+**Current**: Export loop functional → Close LUFS gap via compression tuning
+
+**See**: `docs/reference/EXPORT_FINDINGS.md` for 16 experiments + critical findings
 
 ---
 
