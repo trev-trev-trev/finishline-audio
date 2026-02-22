@@ -124,6 +124,7 @@ flaas verify-audio output/master.wav
 | `flaas loop <wav> [--dry]` | Full iteration | WAV+OSC | actions+OSC | 0=ok, early exit if maxed |
 | `flaas verify-audio <wav>` | Final check | WAV | - | 0=PASS, 1=FAIL |
 | `flaas export-guide` | Print export settings | - | - | 0=ok |
+| `flaas inspect-selected-device` | Show device param table | OSC | - | 0=ok |
 
 ### Utility Commands (Direct Control)
 

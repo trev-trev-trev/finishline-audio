@@ -12,6 +12,7 @@ from flaas.loop import run_loop
 from flaas.verify import verify_master_utility_gain
 from flaas.export_guide import print_export_guide
 from flaas.verify_audio import verify_audio
+from flaas.inspect_selected_device import inspect_selected_device
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -80,6 +81,12 @@ def main() -> None:
 
     va = sub.add_parser("verify-audio", help="Analyze+check a WAV and print PASS/FAIL")
     va.add_argument("wav")
+
+    isd = sub.add_parser("inspect-selected-device", help="Print full parameter table for selected device")
+    isd.add_argument("--timeout", type=float, default=5.0)
+    isd.add_argument("--raw", action="store_true", help="Print raw OSC tuples")
+    isd.add_argument("--host", default="127.0.0.1")
+    isd.add_argument("--port", type=int, default=11000)
 
     args = p.parse_args()
 
@@ -159,6 +166,10 @@ def main() -> None:
 
     if args.cmd == "verify-audio":
         raise SystemExit(verify_audio(args.wav))
+
+    if args.cmd == "inspect-selected-device":
+        inspect_selected_device(target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout, raw=args.raw)
+        return
 
     p.print_help()
 

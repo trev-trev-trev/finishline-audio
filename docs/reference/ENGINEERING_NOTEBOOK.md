@@ -47,7 +47,8 @@
 │   ├── verify.py       # Parameter readback
 │   ├── loop.py         # Orchestration loop
 │   ├── export_guide.py # Export instructions
-│   └── verify_audio.py # Audio verification
+│   ├── verify_audio.py # Audio verification
+│   └── inspect_selected_device.py # Device param inspector
 ├── data/               # Generated artifacts (gitignored)
 │   ├── caches/         # model_cache.json
 │   ├── reports/        # analysis.json, check.json
@@ -216,6 +217,15 @@
 - Return exit code for scripting  
 **Key dependencies**: `analyze`, `check`  
 **Side effects**: All effects of analyze/check + stdout print
+
+#### `src/flaas/inspect_selected_device.py` (58 lines)
+**Purpose**: Device parameter introspection (discovery tool)  
+**Key responsibilities**:
+- Query selected device from Live view
+- Fetch all parameter metadata (name, value, min, max, is_quantized)
+- Print formatted table or raw tuples  
+**Key dependencies**: `osc_rpc`  
+**Side effects**: Network I/O (OSC queries), stdout print
 
 ---
 
@@ -1021,6 +1031,51 @@ echo $?  # Check exit code
 
 ---
 
+### `inspect_selected_device.inspect_selected_device`
+**Signature**:
+```python
+def inspect_selected_device(target: OscTarget = OscTarget(), timeout_sec: float = 5.0, raw: bool = False) -> None
+```
+
+**What it does**:
+- Queries currently selected device in Ableton Live view
+- Fetches all parameter metadata (name, value, min, max, is_quantized)
+- Prints formatted table or raw OSC tuples
+
+**Inputs**:
+- `target`: OscTarget (host, port)
+- `timeout_sec`: Timeout per OSC query
+- `raw`: Print raw tuples if True
+
+**Outputs**: None (stdout only)
+
+**Side effects**:
+- 6 OSC queries (selected_device + 5 param metadata queries)
+- Stdout print
+
+**Failure modes**:
+- `TimeoutError`: No device selected or OSC timeout
+
+**Invariants**:
+- Parameter responses: `(track_id, device_id, val0, val1, ...)`
+- Data sliced from index 2 (skip track_id, device_id prefix)
+
+**Example**:
+```python
+from flaas.inspect_selected_device import inspect_selected_device
+inspect_selected_device()  # Prints table
+inspect_selected_device(raw=True)  # Prints raw tuples
+```
+
+**Where used**: `cli.py` (inspect-selected-device command)
+
+**How to validate**:
+```bash
+flaas inspect-selected-device  # Select device in Ableton first
+```
+
+---
+
 ## 3. OSC Contract Sheet
 
 ### Ports
@@ -1056,6 +1111,14 @@ echo $?  # Check exit code
 - **Purpose**: Get all track names
 - **Wrapper**: `request_once(target, "/live/song/get/track_names", [])`
 
+#### View Selection Query
+**`/live/view/get/selected_device`**
+- **Request**: `[]` (empty list)
+- **Response**: `(track_id, device_id)`
+- **Purpose**: Get currently selected device in Ableton Live view
+- **Note**: User must have device selected in Live
+- **Wrapper**: `inspect_selected_device.inspect_selected_device`
+
 #### Track Query
 **`/live/track/get/num_devices`**
 - **Request**: `[track_id]`
@@ -1089,6 +1152,20 @@ echo $?  # Check exit code
 - **Purpose**: Get all parameter max values for device
 - **Note**: Values at index 2+ are parameter maxs
 - **Wrapper**: `request_once(target, "/live/device/get/parameters/max", [tid, did])`
+
+**`/live/device/get/parameters/value`**
+- **Request**: `[track_id, device_id]`
+- **Response**: `(track_id, device_id, val0, val1, ..., valN)`
+- **Purpose**: Get all parameter normalized values for device
+- **Note**: Values at index 2+ are parameter values (normalized 0..1)
+- **Wrapper**: Used in `inspect_selected_device`
+
+**`/live/device/get/parameters/is_quantized`**
+- **Request**: `[track_id, device_id]`
+- **Response**: `(track_id, device_id, q0, q1, ..., qN)`
+- **Purpose**: Get quantized flag for each parameter (True=stepped, False=continuous)
+- **Note**: Values at index 2+ are boolean flags
+- **Wrapper**: Used in `inspect_selected_device`
 
 **`/live/device/get/parameter/value`**
 - **Request**: `[track_id, device_id, param_id]`
