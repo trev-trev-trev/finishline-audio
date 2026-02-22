@@ -7,7 +7,7 @@
 
 ## CURRENT TASK
 
-**Semi-automated batch runner READY** ✅
+**Fully automated batch runner READY** ✅
 
 **Command**: `flaas experiment-run data/experiments/master_sweep.json`
 
@@ -15,15 +15,16 @@
 
 **Gap to target**: 3.09 LU (-13.59 → -10.50)
 
-**Next action**: Run batch experiment (3 runs: GR 12-18 dB, Makeup 15-20 dB, Limiter 28-32 dB)
+**Next action**: Run batch experiment (3 runs, fully automated on macOS)
 
 **Automation status**: 
 - ✅ Parameter control (Glue, Limiter) automated
+- ✅ Export trigger automated (macOS UI automation via AppleScript)
 - ✅ Verification automated (LUFS, peak)
 - ✅ Logging automated (JSONL receipts)
-- ❌ Export trigger (manual click required per experiment)
+- ⚠️ Master fader (manual pre-run check, no OSC endpoint)
 
-**ROI**: 4-5x speedup (7 min vs 30 min for 10 experiments)
+**ROI**: 4-5x speedup (7 min vs 30 min for 10 experiments), zero clicks on macOS
 
 **See**: 
 - `docs/reference/EXPERIMENT_RUNNER_USAGE.md` - Usage guide
@@ -157,22 +158,36 @@ make write       # 39s, 13 tests (commit gate)
 
 ## NEXT ACTION
 
-**Test batch runner** (semi-automated):
+**Run fully automated batch** (zero clicks on macOS):
 
 ```bash
 flaas experiment-run data/experiments/master_sweep.json
 ```
 
+**Pre-requisites**:
+- Ableton Live running with project open
+- Export defaults: Rendered Track = Master, Normalize = OFF
+- Loop/selection: 4-8 bars
+- **macOS permissions** (one-time):
+  - System Settings → Accessibility → Terminal ON
+  - System Settings → Automation → Terminal → System Events ON
+
 **What happens**:
-1. Auto-sets params via OSC (Glue, Limiter, Master fader)
-2. Pauses for manual export (prints filename)
-3. Auto-verifies (LUFS, peak)
-4. Logs to `output/experiments.jsonl`
-5. Early exit on success (targets hit)
+1. Prompts: Confirm Master fader = 0.0 dB, press Enter
+2. Auto-sets params via OSC (Glue, Limiter)
+3. Auto-exports via AppleScript (Cmd+Shift+R → Save)
+4. Auto-verifies (LUFS, peak)
+5. Logs to `output/experiments.jsonl`
+6. Early exit on success (targets hit)
 
 **Config**: 3 experiments (GR 12-18 dB, Makeup 15-20 dB, Limiter 28-32 dB)
 
 **Goal**: Close 3.09 LU gap (-13.59 → -10.50) while maintaining peak ≤ -6.00
+
+**After completion**:
+```bash
+tail -n 5 output/experiments.jsonl
+```
 
 ---
 
