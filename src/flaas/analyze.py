@@ -30,8 +30,11 @@ def analyze_wav(path: str | Path) -> AnalysisResult:
     peak = float(np.max(np.abs(mono)))
     peak_dbfs = -float("inf") if peak == 0.0 else float(20.0 * np.log10(peak))
 
-    # True peak (4x oversampling approximation for dBTP)
-    # For true dBTP we'd need proper ITU-R BS.1770 true peak, but 4x oversample is close
+    # True peak (4x oversampling approximation)
+    # NOTE: This is an APPROXIMATION, not a full ITU-R BS.1770-4 implementation
+    # Proper true peak requires: 4x oversample + proper lowpass filter + inter-sample peak detection
+    # TODO: Validate against reference meter (Youlean, ffmpeg ebur128=peak=true)
+    # See: tests/validate_true_peak.py for validation methodology
     from scipy import signal
     oversampled = signal.resample(mono, len(mono) * 4)
     true_peak = float(np.max(np.abs(oversampled)))

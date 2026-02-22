@@ -9,17 +9,18 @@
 
 **Official guidance**: [Spotify for Artists - Loudness Normalization](https://artists.spotify.com/help/article/loudness-normalization)
 
-**Target**:
-- **LUFS-I**: -14 LUFS (integrated)
-- **True Peak**: ≤ -1 dBTP (recommended)
+**Target behavior** (not hard delivery spec):
+- **LUFS-I**: -14 LUFS (integrated) ← Spotify's normalization target
+- **True Peak**: ≤ -1 dBTP (recommended for codec safety)
 
-**Loudness penalty note**: 
-- Tracks louder than -14 LUFS are turned down
-- Tracks quieter than -14 LUFS are turned up (if user enables "Loud" mode)
+**Important**: This is Spotify's **recommendation**, not a hard delivery requirement. They normalize all tracks to -14 LUFS:
+- Tracks **louder** than -14 LUFS: Turned down
+- Tracks **quieter** than -14 LUFS: Turned up (if user enables "Loud" mode)
 
 **True peak note**:
 - For tracks louder than -14 LUFS, Spotify recommends managing true peak to avoid codec distortion
 - Suggested: ≤ -2 dBTP for louder masters
+- Prevents inter-sample peaks during MP3/AAC encoding
 
 ---
 
@@ -55,27 +56,29 @@
 
 ## Mode Definitions (Corrected)
 
-### Mode 1: Streaming Safe (Official Spec)
+### Mode 1: Streaming Safe (Conservative, Default)
 
 **Target**: LUFS -14, True Peak -1 dBTP
 
-**Use case**: Maximum compatibility, official Spotify/streaming standard
+**Use case**: Maximum compatibility, follows Spotify's recommendation
 
 **Trade-off**: Quieter initial playback (normalized up by service)
 
+**Note**: This is the safest default - avoids overcooking
+
 ### Mode 2: Loud Preview (Competitive Commercial)
 
-**Target**: LUFS -9 to -8, True Peak -2 dBTP
+**Target**: LUFS -9, True Peak -2 dBTP
 
-**Use case**: Competitive loudness, matches commercial releases
+**Use case**: Competitive loudness, **addresses "super quiet" perception**
 
 **Trade-off**: Normalized down by services, but perceived as "louder" initially
 
-**Note**: This is what most commercial pop/EDM releases actually target
+**Note**: Commercial releases vary by genre (-8 to -12 LUFS typical for pop/EDM, -10 to -14 for indie/acoustic). Use your ears and watch for artifacts.
 
 ### Mode 3: Headroom Safe (Internal Safety)
 
-**Target**: LUFS flexible, Peak -6 dBFS (sample peak)
+**Target**: LUFS -10, Peak -6 dBFS (sample peak)
 
 **Use case**: Internal safety margin for format conversion
 
@@ -107,14 +110,16 @@
 
 **Previous (incorrect)**:
 - Target: -8.0 LUFS, -6 dBFS sample peak
-- Claimed: "Spotify ceiling"
+- Claimed: "Spotify ceiling" (wrong - Spotify target is -14, not -8)
 
 **Corrected**:
-- Mode 1: -14 LUFS, -1 dBTP (streaming safe, official)
-- Mode 2: -9 LUFS, -2 dBTP (loud preview, competitive)
-- Mode 3: -6 dBFS sample peak (headroom safe, internal)
+- Mode 1: **streaming_safe** = -14 LUFS, -1 dBTP (default, conservative)
+- Mode 2: **loud_preview** = -9 LUFS, -2 dBTP (competitive, genre-dependent)
+- Mode 3: **headroom** = -10 LUFS, -6 dBFS (internal safety)
 
-**Implementation**: Add modes to `flaas master-consensus --mode <name>`
+**Implementation**: `flaas master-consensus --mode <name>`
+
+**Default**: `streaming_safe` (conservative, avoids overcooking)
 
 ---
 

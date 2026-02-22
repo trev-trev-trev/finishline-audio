@@ -209,7 +209,7 @@ def main() -> None:
     master_cons.add_argument("--host", default="127.0.0.1")
     master_cons.add_argument("--port", type=int, default=11000)
     master_cons.add_argument("--no-auto-export", action="store_true", help="Disable auto-export (manual)")
-    master_cons.add_argument("--mode", choices=["streaming_safe", "loud_preview", "headroom"], default="loud_preview", help="Target mode: streaming_safe (-14 LUFS, -1 dBTP), loud_preview (-9 LUFS, -2 dBTP), headroom (-10 LUFS, -6 dBFS)")
+    master_cons.add_argument("--mode", choices=["streaming_safe", "loud_preview", "headroom"], default="streaming_safe", help="Target mode: streaming_safe (-14 LUFS, -1 dBTP, default), loud_preview (-9 LUFS, -2 dBTP), headroom (-10 LUFS, -6 dBFS)")
 
     args = p.parse_args()
 

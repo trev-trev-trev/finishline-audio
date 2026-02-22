@@ -9,6 +9,7 @@ from flaas.osc_rpc import OscTarget, request_once
 from flaas.analyze import analyze_wav
 from flaas.check import check_wav
 from flaas.targets import DEFAULT_TARGETS
+from flaas.preflight import run_preflight_checks
 from pythonosc.udp_client import SimpleUDPClient
 
 if sys.platform == "darwin":
@@ -179,19 +180,19 @@ def master_consensus(
         print(f"ERROR: Failed to resolve params: {e}")
         return 20
     
-    # Pre-run check
-    print(f"\n{'─'*70}")
-    print(f"PRE-RUN CHECKLIST:")
-    print(f"  [ ] Ableton Live running with project open")
-    print(f"  [ ] Export defaults: Rendered Track=Master, Normalize=OFF")
-    print(f"  [ ] Export folder = /Users/trev/Repos/finishline_audio_repo/output")
-    print(f"  [ ] Loop/selection set to 8-bar section")
-    print(f"  [ ] Master fader = 0.0 dB (CRITICAL - verify visually)")
-    print(f"  [ ] Device chain: Utility → EQ → Glue → Saturator → Limiter (all ON)")
-    if saturator_device_id is None:
-        print(f"  ⚠ Saturator missing (add for best RMS boost, or continue without)")
-    print(f"{'─'*70}")
-    input("Press Enter to start optimization...")
+    # Run pre-flight checks (hard invariants)
+    if not run_preflight_checks(master_track_id, target):
+        print(f"\n❌ ABORTING: Pre-flight checks failed")
+        print(f"   Fix issues above and re-run")
+        return 20
+    
+    print(f"\n✅ Pre-flight checks passed - starting optimization...")
+    
+    # Run pre-flight checks (hard invariants)
+    if not run_preflight_checks(master_track_id, target):
+        print(f"\n❌ ABORTING: Pre-flight checks failed")
+        print(f"   Fix issues above and re-run")
+        return 20
     
     # Mode-specific starting parameters
     if mode == "streaming_safe":
@@ -433,12 +434,12 @@ def master_consensus(
     
     # If we didn't hit exact convergence, use best result
     if not best_result.get("final"):
-    print(f"\n{'='*70}")
-    print(f"USING BEST RESULT (closest to target)")
-    print(f"  LUFS: {best_result['lufs_i']:.2f} (target {target_lufs:.1f}, distance {best_result['lufs_distance']:.2f})")
-    print(f"  True Peak: {best_result['true_peak_dbtp']:.2f} (limit {true_peak_limit:.1f})")
-    print(f"  Iteration: {best_result['iteration']}")
-    print(f"{'='*70}")
+        print(f"\n{'='*70}")
+        print(f"USING BEST RESULT (closest to target)")
+        print(f"  LUFS: {best_result['lufs_i']:.2f} (target {target_lufs:.1f}, distance {best_result['lufs_distance']:.2f})")
+        print(f"  True Peak: {best_result['true_peak_dbtp']:.2f} (limit {true_peak_limit:.1f})")
+        print(f"  Iteration: {best_result['iteration']}")
+        print(f"{'='*70}")
         
         # Find the best iteration file and rename to final
         best_iter = best_result['iteration']

@@ -189,32 +189,47 @@ cat output/master_candidates.jsonl | jq .
 - [ ] Master device chain: Utility → EQ → Glue Compressor → **Saturator** → Limiter (all ON)
   - **Saturator optional but recommended** (add for maximum loudness)
 
-**Run command** (LOUD mode for "super quiet" issue):
+**DEFAULT (conservative, recommended first run)**:
 ```bash
-cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate && flaas master-consensus --mode loud_preview
+cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate && flaas master-consensus
 ```
+- Default mode: `streaming_safe` (-14 LUFS, -1 dBTP)
+- Official Spotify recommendation
+- Good baseline, avoids overcooking
+
+**IF "super quiet" (use loud_preview mode)**:
+```bash
+flaas master-consensus --mode loud_preview
+```
+- Target: **LUFS -9.0, True Peak -2 dBTP** (competitive commercial)
+- **Genre note**: Commercial releases vary (-8 to -12 LUFS depending on style)
+- Pop/EDM: typically -8 to -9 LUFS
+- Indie/acoustic: typically -10 to -14 LUFS
+- **Use your ears** and watch for artifacts (distortion, pumping)
 
 **What it does**:
-- Generates ONE thoroughly optimized master (loud_preview mode)
-- Target: **LUFS -9.0, True Peak -2 dBTP** (competitive commercial loudness)
+- Generates ONE thoroughly optimized master
 - Up to 15 iterations with adaptive adjustments
-- Uses Saturator + Glue Compressor + Limiter (3-stage processing)
-- Detects diminishing returns (stops pushing limiter when ineffective)
-- Prioritizes Saturator/compression over extreme limiter gain
+- **Pre-flight checks**: Verifies master fader (0.0 dB) and device order
+- **3-stage processing**: Glue Compressor → Saturator (optional) → Limiter
+- **Diminishing returns detection**: Stops pushing limiter when ineffective (< 0.2 LU improvement)
+- **Adaptive strategy**: Prioritizes Saturator/compression over extreme limiter gain
 - Stops when within 0.5 LU of target with safe true peak
 
 **After completion**:
 ```bash
+# If you ran default (streaming_safe):
+ls -lh output/master_streaming_safe.wav
+cat output/master_streaming_safe.jsonl | jq .
+
+# If you ran loud_preview:
 ls -lh output/master_loud_preview.wav
 cat output/master_loud_preview.jsonl | jq .
 ```
 
-**Listen**: `output/master_loud_preview.wav` should be LOUD, full, competitive
-
-**Other modes** (if you want different loudness):
+**Other modes**:
 ```bash
-flaas master-consensus --mode streaming_safe  # -14 LUFS (official Spotify, quieter)
-flaas master-consensus --mode headroom        # -10 LUFS (moderate)
+flaas master-consensus --mode headroom  # -10 LUFS (moderate, internal safety)
 ```
 
 ---
