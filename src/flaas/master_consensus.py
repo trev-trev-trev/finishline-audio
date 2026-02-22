@@ -234,6 +234,7 @@ def master_consensus(
     best_result = None
     best_distance = float('inf')
     last_lufs = None  # Track diminishing returns
+    stop_reason = None  # Track why we stopped
     
     for iteration in range(1, 16):  # Up to 15 iterations for convergence
         print(f"\n{'─'*70}")
@@ -322,8 +323,10 @@ def master_consensus(
             if true_peak_safe and lufs_distance <= 0.5:
                 print(f"\n{'='*70}")
                 print(f"✅ CONVERGENCE ACHIEVED")
-                print(f"  LUFS: {analysis.lufs_i:.2f} (target {target_lufs:.1f})")
-                print(f"  True Peak: {analysis.true_peak_dbtp:.2f} (limit {true_peak_limit:.1f})")
+                print(f"  LUFS-I: {analysis.lufs_i:.2f} (target {target_lufs:.1f})")
+                print(f"  True Peak: {analysis.true_peak_dbtp:.2f} dBTP (limit {true_peak_limit:.1f})")
+                print(f"  Iterations: {iteration}")
+                print(f"  STOP_REASON: hit_target")
                 print(f"{'='*70}")
                 # Rename to final
                 if temp_export != final_output:
@@ -332,6 +335,7 @@ def master_consensus(
                     temp_export.rename(final_output)
                 best_result["export_file"] = str(final_output)
                 best_result["final"] = True
+                stop_reason = "hit_target"
                 break
             
             # Detect diminishing returns on limiter gain
@@ -427,6 +431,10 @@ def master_consensus(
             print(f"  ✗ Verification failed: {e}")
             return 20
     
+    # Check if we hit max iterations
+    if not stop_reason:
+        stop_reason = "max_iterations"
+    
     # Final result
     if not best_result:
         print(f"\nERROR: No valid result after {iteration} iterations")
@@ -436,9 +444,10 @@ def master_consensus(
     if not best_result.get("final"):
         print(f"\n{'='*70}")
         print(f"USING BEST RESULT (closest to target)")
-        print(f"  LUFS: {best_result['lufs_i']:.2f} (target {target_lufs:.1f}, distance {best_result['lufs_distance']:.2f})")
-        print(f"  True Peak: {best_result['true_peak_dbtp']:.2f} (limit {true_peak_limit:.1f})")
+        print(f"  LUFS-I: {best_result['lufs_i']:.2f} (target {target_lufs:.1f}, distance {best_result['lufs_distance']:.2f})")
+        print(f"  True Peak: {best_result['true_peak_dbtp']:.2f} dBTP (limit {true_peak_limit:.1f})")
         print(f"  Iteration: {best_result['iteration']}")
+        print(f"  STOP_REASON: {stop_reason}")
         print(f"{'='*70}")
         
         # Find the best iteration file and rename to final
@@ -489,6 +498,7 @@ def master_consensus(
         },
         "iterations_total": best_result["iteration"],
         "converged": best_result.get("final", False),
+        "stop_reason": stop_reason,
     }
     
     with log_path.open("w", encoding="utf-8") as f:
@@ -499,15 +509,15 @@ def master_consensus(
     print(f"✅ CONSENSUS MASTER COMPLETE: {mode_desc}")
     print(f"{'='*70}")
     print(f"")
-    print(f"File: {final_output}")
+    print(f"FILE: {final_output}")
     print(f"")
-    print(f"Results:")
-    print(f"  LUFS: {best_result['lufs_i']:.2f} (target {target_lufs:.1f})")
+    print(f"RESULTS:")
+    print(f"  LUFS-I: {best_result['lufs_i']:.2f} (target {target_lufs:.1f})")
     print(f"  True Peak: {best_result['true_peak_dbtp']:.2f} dBTP (limit {true_peak_limit:.1f})")
     print(f"  Distance from target: {best_result['lufs_distance']:.2f} LU")
     print(f"  True peak safe: {best_result['true_peak_safe']}")
     print(f"")
-    print(f"Final settings:")
+    print(f"FINAL SETTINGS:")
     print(f"  Glue Threshold: {best_result['threshold_db']:.1f} dB")
     print(f"  Glue Makeup: {best_result['makeup_db']:.1f} dB")
     print(f"  Glue Ratio: {best_result['ratio']:.1f}:1")
@@ -515,8 +525,9 @@ def master_consensus(
         print(f"  Saturator Drive: {best_result['saturator_drive_db']:.1f} dB")
     print(f"  Limiter Gain: {best_result['limiter_gain_db']:.1f} dB")
     print(f"")
-    print(f"Iterations: {best_result['iteration']}")
-    print(f"Log: {log_path}")
+    print(f"ITERATIONS: {best_result['iteration']}")
+    print(f"STOP_REASON: {stop_reason}")
+    print(f"LOG: {log_path}")
     print(f"")
     
     # Update EXPORT_FINDINGS.md

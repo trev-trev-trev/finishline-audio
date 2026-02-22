@@ -100,10 +100,11 @@ cat output/master_loud_preview.jsonl | jq .
 - ✅ Move to next track
 - ✅ Consider this master "done" (per flaas algorithm v1)
 
-**If still too quiet** (unlikely):
+**If still too quiet**:
 - Check playback volume (system, headphones)
 - Verify Saturator is in chain
-- See "IF STILL TOO QUIET" section in `HUMAN_ACTIONS_REQUIRED.md`
+- **Acknowledge**: May not reach -9 LUFS without artifacts (sparse loops, artifact risk)
+- Check STOP_REASON: If "diminishing_returns" or "peak_clamp", algorithm stopped to prevent overcooking
 
 **If sounds harsh/distorted**:
 - You may have exceeded artifact threshold
@@ -116,16 +117,38 @@ cat output/master_loud_preview.jsonl | jq .
 
 ---
 
-## Bottom Line
+## Stop Reasons (What to Expect)
 
-**This is your final swing at maximum loudness**:
-- Loudest target: -9 LUFS (without overdoing it)
-- Best RMS boost: Saturator + Glue + Limiter
-- Maximum iterations: 15 (thorough convergence)
-- Adaptive algorithm: Prioritizes density over limiting
+**hit_target**: Reached -9 LUFS ±0.5 LU with true peak safe (IDEAL)
 
-**After this run**: You have a shippable master. Premium plugins are enhancement, not requirement.
+**max_iterations**: Reached 15 iterations, used best result (ACCEPTABLE)
+- May indicate sparse loop or artifact limit reached
+
+**diminishing_returns**: LUFS improvement < 0.2 LU, stopped to prevent overcooking (SMART)
+- Algorithm detected artifact risk (limiter working too hard)
+
+**peak_clamp**: True peak exceeded limit repeatedly, stopped for safety (SAFE)
+- May indicate target LUFS not achievable with safe peak
 
 ---
 
-**Run it. Listen. If it's LOUD and sounds incredible, you're done.**
+## Bottom Line
+
+**This is your final swing at maximum loudness**:
+- Loudest practical target: -9 LUFS (commercial competitive)
+- Best RMS boost: Saturator + Glue + Limiter
+- Maximum iterations: 15 (thorough convergence)
+- Adaptive algorithm with artifact guards
+
+**After this run**: You have a shippable master (whether -9 or closest safe result)
+
+**Streaming platforms normalize anyway**: 
+- -9 LUFS → Spotify turns down to -14
+- -12 LUFS → Spotify turns down to -14
+- Initial perception = LOUD, final playback = normalized
+
+**Shippable = streaming_safe (-14) OR loud_preview (-9)**. Both valid, artistic choice.
+
+---
+
+**Run it. Check STOP_REASON. Listen. If sounds good at achieved LUFS, you're done.**

@@ -228,11 +228,16 @@ cat output/master_loud_preview.jsonl | jq .
 
 **Listen**: `output/master_loud_preview.wav`
 
+**Check output**: Look for STOP_REASON in terminal output
+- `hit_target`: Reached -9 LUFS (IDEAL)
+- `max_iterations`: Used best result after 15 iterations (ACCEPTABLE)
+- `diminishing_returns`: Stopped to prevent artifacts (SMART)
+
 **Expected**: LOUD, full, smooth (competitive with commercial releases)
 
-**If good**: Ship it, move to next track
+**If good at achieved LUFS**: Ship it, move to next track
 
-**If needs more**: See "IF STILL TOO QUIET" section below
+**If sparse loop prevented target**: Algorithm stopped correctly (artifact guard worked)
 
 ---
 
