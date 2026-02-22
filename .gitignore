@@ -25,3 +25,6 @@ data/timelines/*.json
 
 # Build artifacts
 *.egg-info/
+
+# Generated reports
+data/reports/*.json
