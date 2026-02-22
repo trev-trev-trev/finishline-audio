@@ -25,6 +25,9 @@ source .venv/bin/activate
 * `input/` — local audio inputs (ignored)
 * `output/` — renders/exports (ignored)
 
+## Note on Utility Gain
+Utility “Gain” via AbletonOSC device parameters is exposed as a normalized control (often with min=-1, max=1). Current MVP treats gain actions as *linear* values mapped into normalized 0..1.
+
 ## Next MVP milestones
 
 * Real AbletonOSC model scan (tracks/devices/params)
