@@ -19,6 +19,7 @@ data/reports/*.html
 data/caches/*.json
 data/actions/*.json
 data/timelines/*.json
+data/registry/*.json
 
 # Logs
 *.log

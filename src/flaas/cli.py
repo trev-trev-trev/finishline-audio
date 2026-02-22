@@ -17,6 +17,7 @@ from flaas.eq8_set_param import eq8_set_param
 from flaas.inspect_selected_track import inspect_selected_track
 from flaas.device_set_param import device_set_param
 from flaas.device_param_info import device_param_info
+from flaas.eq8_map import generate_eq8_map
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -125,6 +126,13 @@ def main() -> None:
     dpi.add_argument("--host", default="127.0.0.1")
     dpi.add_argument("--port", type=int, default=11000)
 
+    eq8m = sub.add_parser("eq8-map", help="Generate EQ Eight parameter map as JSON")
+    eq8m.add_argument("track_id", type=int, help="Track index")
+    eq8m.add_argument("device_id", type=int, help="Device index")
+    eq8m.add_argument("--timeout", type=float, default=5.0)
+    eq8m.add_argument("--host", default="127.0.0.1")
+    eq8m.add_argument("--port", type=int, default=11000)
+
     args = p.parse_args()
 
     if args.version:
@@ -222,6 +230,14 @@ def main() -> None:
 
     if args.cmd == "device-param-info":
         device_param_info(track_id=args.track_id, device_id=args.device_id, param_id=args.param_id, target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout, raw=args.raw)
+        return
+
+    if args.cmd == "eq8-map":
+        path = generate_eq8_map(track_id=args.track_id, device_id=args.device_id, target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout)
+        import json
+        data = json.load(open(path))
+        missing_count = len(data["groups"].get("missing", []))
+        print(f"WROTE {path} (params={len(data['params'])} missing={missing_count})")
         return
 
     p.print_help()
