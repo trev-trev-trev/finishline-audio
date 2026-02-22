@@ -236,10 +236,16 @@ def auto_tune_master(input_wav: str, output_wav: str, max_iterations: int = 10):
 
 ---
 
-**Status**: ✅ Phase 1.1-1.3 complete. Ready to test.
+**Status**: ✅ Phase 1.1-1.3 complete. ✅ Export automation added (macOS UI automation).
 
-**Next**: Run `flaas experiment-run data/experiments/master_sweep.json` (close 3.09 LU gap)
+**Export automation**: Fully automated via AppleScript (Cmd+Shift+R keystroke sequence)
+
+**Next**: Run `flaas experiment-run data/experiments/master_sweep.json` (close 3.09 LU gap, zero clicks)
+
+**macOS Permissions Required** (one-time):
+- System Settings → Privacy & Security → Accessibility → Terminal ON
+- System Settings → Privacy & Security → Automation → Terminal → System Events ON
 
 **See**: 
 - `docs/reference/EXPERIMENT_RUNNER_USAGE.md` - Usage guide
-- `docs/reference/EXPORT_AUTOMATION_FEASIBILITY.md` - Probe details
+- `src/flaas/ui_export_macos.py` - UI automation implementation
