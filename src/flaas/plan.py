@@ -5,6 +5,7 @@ from pathlib import Path
 from flaas.analyze import analyze_wav
 from flaas.targets import Targets, DEFAULT_TARGETS
 from flaas.actions import GainAction, write_actions
+from flaas.scan import scan_live
 
 @dataclass(frozen=True)
 class PlanGainResult:
@@ -40,7 +41,7 @@ def write_plan_gain_actions(path: str | Path, out_actions: str | Path = "data/ac
             delta_db=r.delta_linear,  # stored in delta_db field for now (legacy)
         )
     ]
-    out = write_actions(actions, out_actions)
+    out = write_actions(actions, out_actions, live_fingerprint=scan_live().fingerprint)
     if r.clamped:
         print(f"WARNING: gain plan clamped to {r.delta_linear:.3f} (raw would exceed clamp).")
     return out
