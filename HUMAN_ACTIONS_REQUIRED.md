@@ -183,18 +183,26 @@ cat output/master_candidates.jsonl | jq .
 - [ ] Master fader = 0.0 dB
 - [ ] Master device chain: Utility → EQ → Glue Compressor → Limiter (all ON)
 
-**Run command**:
+**Run command** (ONE high-quality master):
 ```bash
-cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate && flaas master-candidates
+cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate && flaas master-consensus
 ```
+
+**What it does**:
+- Generates ONE thoroughly optimized master (not 3 variants)
+- Target: **LUFS -9.0** (competitive streaming loudness, NOT quiet)
+- Up to 10 iterations with adaptive parameter adjustments
+- Aggressive starting params: Strong compression + high limiter gain
+- Auto-adjusts threshold, makeup, and limiter gain to converge
+- Stops when within 0.3 LU of target with safe peak
 
 **After completion**:
 ```bash
-ls -lh output/master_*.wav
-tail -n 5 output/master_candidates.jsonl
+ls -lh output/master_consensus.wav
+cat output/master_consensus.jsonl
 ```
 
-**Listen and choose** your favorite master!
+**Listen**: `output/master_consensus.wav` should be full, loud, smooth (NOT quiet!)
 
 ---
 

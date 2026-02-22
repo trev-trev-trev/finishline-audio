@@ -27,6 +27,7 @@ from flaas.limiter_set import limiter_set
 from flaas.device_set_safe_param import device_set_safe_param
 from flaas.experiment_run import experiment_run
 from flaas.master_candidates import master_candidates
+from flaas.master_consensus import master_consensus
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -203,6 +204,12 @@ def main() -> None:
     master_cand.add_argument("--host", default="127.0.0.1")
     master_cand.add_argument("--port", type=int, default=11000)
     master_cand.add_argument("--no-auto-export", action="store_true", help="Disable auto-export (manual)")
+
+    master_cons = sub.add_parser("master-consensus", help="Generate ONE high-quality consensus master (auto-optimized)")
+    master_cons.add_argument("--host", default="127.0.0.1")
+    master_cons.add_argument("--port", type=int, default=11000)
+    master_cons.add_argument("--no-auto-export", action="store_true", help="Disable auto-export (manual)")
+    master_cons.add_argument("--target-lufs", type=float, default=-9.0, help="Target LUFS (default: -9.0 for competitive loudness)")
 
     args = p.parse_args()
 
@@ -384,6 +391,14 @@ def main() -> None:
         code = master_candidates(
             target=RpcTarget(host=args.host, port=args.port),
             auto_export_enabled=(not args.no_auto_export),
+        )
+        raise SystemExit(code)
+    
+    if args.cmd == "master-consensus":
+        code = master_consensus(
+            target=RpcTarget(host=args.host, port=args.port),
+            auto_export_enabled=(not args.no_auto_export),
+            target_lufs=args.target_lufs,
         )
         raise SystemExit(code)
 

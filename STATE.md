@@ -158,26 +158,28 @@ make write       # 39s, 13 tests (commit gate)
 
 ## NEXT ACTION
 
-**Generate 3 master candidates** (fully automated, zero clicks):
+**Generate ONE consensus master** (fully automated, zero clicks):
 
 ```bash
-flaas master-candidates
+flaas master-consensus
 ```
 
 **What it does**:
-- 3 curated presets (CONSENSUS, VARIANT A, VARIANT B)
-- Iterative threshold search per candidate (up to 6 iterations each)
-- Auto-exports via UI automation (macOS)
-- Stops each candidate when LUFS -10.50 ±0.5, Peak ≤ -6.00
-- Outputs: `output/master_consensus.wav`, `output/master_variant_a.wav`, `output/master_variant_b.wav`
-- Logs: `output/master_candidates.jsonl`
+- ONE thoroughly optimized master (addresses "super quiet" issue)
+- Target: **LUFS -9.0** (competitive streaming loudness, NOT -10.5)
+- Up to 10 iterations with adaptive adjustments
+- Aggressive starting params: GR 15-18 dB, Makeup 22 dB, Limiter gain 36 dB
+- Auto-adjusts threshold, makeup, limiter gain dynamically
+- Converges when LUFS within 0.3 LU of target, peak safe
+- Output: `output/master_consensus.wav`
+- Log: `output/master_consensus.jsonl`
 
-**Goal**: Generate 3 Spotify-ready masters from current 8-bar loop
+**Goal**: Generate ONE high-quality, properly loud master from 8-bar loop
 
 **After completion**:
 ```bash
-ls -lh output/master_*.wav
-tail -n 5 output/master_candidates.jsonl
+ls -lh output/master_consensus.wav
+cat output/master_consensus.jsonl | jq .
 ```
 
 ---

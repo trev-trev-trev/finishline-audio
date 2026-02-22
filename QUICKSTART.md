@@ -38,26 +38,27 @@ flaas experiment-run <config.json>  # Custom parameter sweep
 
 ## Next Action (Fully Automated)
 
-**Generate 3 master candidates** (zero clicks):
+**Generate ONE consensus master** (zero clicks, properly loud):
 ```bash
-flaas master-candidates
+flaas master-consensus
 ```
 
 **What happens**:
-1. Iterative threshold search per candidate (up to 6 iterations each)
-2. Auto-sets params (Glue, Limiter) via OSC
-3. Auto-exports via macOS UI automation (no clicks)
-4. Auto-verifies LUFS/peak
-5. Logs to `output/master_candidates.jsonl`
-6. Stops each candidate when targets hit
+1. Up to 10 iterations with adaptive optimization
+2. Target: **LUFS -9.0** (competitive loudness, NOT quiet)
+3. Auto-sets params (Glue, Limiter) via OSC
+4. Auto-exports via macOS UI automation (no clicks)
+5. Auto-verifies LUFS/peak
+6. Stops when within 0.3 LU of target
+7. Logs to `output/master_consensus.jsonl`
 
-**Outputs**: 3 WAV files (consensus, variant_a, variant_b)
+**Output**: ONE thoroughly optimized WAV (`output/master_consensus.wav`)
 
-**Goal**: Generate 3 Spotify-ready masters from current 8-bar loop
+**Goal**: High-quality, properly loud master (NOT the quiet -10.5 target)
 
-**Alternative - Custom sweep**:
+**Alternative - 3 variants**:
 ```bash
-flaas experiment-run data/experiments/master_sweep.json
+flaas master-candidates  # Generates 3 different presets
 ```
 
 **macOS Permissions Required** (one-time):
