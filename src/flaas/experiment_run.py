@@ -10,6 +10,7 @@ from flaas.osc_rpc import OscTarget, request_once
 from flaas.analyze import analyze_wav
 from flaas.check import check_wav
 from flaas.targets import DEFAULT_TARGETS
+from pythonosc.udp_client import SimpleUDPClient
 
 
 @dataclass
@@ -115,7 +116,7 @@ def set_device_param_by_name(
     """
     Set device parameter by name.
     
-    Converts value to normalized [0,1] and sends via OSC.
+    Converts value to normalized [0,1] and sends via OSC (fire-and-forget).
     """
     param_id = param_info["id"]
     min_val = param_info["min"]
@@ -126,11 +127,11 @@ def set_device_param_by_name(
     norm_value = max(0.0, min(1.0, norm_value))  # Clamp
     
     try:
-        request_once(
-            target,
+        # Fire-and-forget write (no reply expected)
+        client = SimpleUDPClient(target.host, target.port)
+        client.send_message(
             "/live/device/set/parameter/value",
-            [track_id, device_id, param_id, norm_value],
-            timeout_sec=timeout_sec
+            [track_id, device_id, param_id, norm_value]
         )
     except Exception as e:
         print(f"ERROR: Failed to set param {param_name} (track={track_id}, device={device_id}, param_id={param_id}, value={value}): {e}")
@@ -146,18 +147,15 @@ def set_master_fader(
     """
     Set track volume (master fader).
     
+    NOTE: /live/track/set/volume endpoint does not exist in current AbletonOSC.
+    This function always falls back to manual adjustment.
+    
     Value is linear (0.0-1.0, where 0.85 ≈ 0.0 dB).
     """
-    try:
-        request_once(
-            target,
-            "/live/track/set/volume",
-            [track_id, linear_value],
-            timeout_sec=timeout_sec
-        )
-    except Exception as e:
-        print(f"ERROR: Failed to set master fader: {e}")
-        print(f"FALLBACK: Manually set Master fader to 0.0 dB in Ableton")
+    # Master fader control not available via OSC
+    # Always prompt for manual adjustment
+    print(f"⚠ Master fader OSC control not available")
+    print(f"  Manually set Master fader to 0.0 dB in Ableton and press Enter")
 
 
 def wait_for_file(path: Path, timeout_sec: float = 30.0) -> bool:
@@ -251,14 +249,13 @@ def experiment_run(
     limiter_params = resolve_device_params(master_track_id, limiter_device_id, target)
     print(f"  Found {len(limiter_params)} params")
     
-    # Set master fader to 0.0 dB (0.85 linear)
-    print(f"Setting master fader to 0.0 dB...")
-    try:
-        set_master_fader(master_track_id, 0.85, target)
-        print(f"  ✓ Master fader set to 0.0 dB")
-    except SystemExit:
-        print(f"  ⚠ OSC failed - Manually set Master fader to 0.0 dB")
-        input("Press Enter when ready...")
+    # Set master fader to 0.0 dB (manual - OSC not available)
+    print(f"\n{'─'*70}")
+    print(f"🎛️  PRE-RUN CHECK:")
+    print(f"   In Ableton: Ensure Master fader = 0.0 dB")
+    print(f"{'─'*70}")
+    set_master_fader(master_track_id, 0.85, target)
+    input("Press Enter when ready...")
     
     # Prepare output log
     log_path = Path("output/experiments.jsonl")
