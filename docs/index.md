@@ -94,7 +94,8 @@
 - [unique-lines/INDEX.md](reference/unique-lines/INDEX.md) ⭐ **Code Transparency**
 
 ### UI (Future Work)
-- [ui-spec-running.md](ui/ui-spec-running.md) - Placeholder (no work until MVP complete)
+- [UX.md](ui/UX.md) ⭐ **Read-only Status Dashboard spec** (planning doc)
+- [ui-spec-running.md](ui/ui-spec-running.md) - General UI exploration (placeholder)
 
 ### Archive (Historical)
 - [INDEX.md](archive/INDEX.md) - Archive contents

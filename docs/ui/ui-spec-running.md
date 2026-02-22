@@ -2,6 +2,12 @@
 
 **Status**: Placeholder - No UI work until MVP gates pass
 
+**→ [UX.md](UX.md) is the canonical UI planning doc** (read-only status dashboard).
+
+---
+
+**This document** (`ui-spec-running.md`) covers general UI exploration. **[UX.md](UX.md)** is the focused spec for the Status Dashboard frontend
+
 ---
 
 ## MVP Gates (UI Work Blocked Until Complete)
