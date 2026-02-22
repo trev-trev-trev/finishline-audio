@@ -19,6 +19,7 @@ from flaas.device_set_param import device_set_param
 from flaas.device_param_info import device_param_info
 from flaas.eq8_map import generate_eq8_map
 from flaas.eq8_set import eq8_set
+from flaas.eq8_reset_gains import eq8_reset_gains
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -146,6 +147,14 @@ def main() -> None:
     eq8s.add_argument("--host", default="127.0.0.1")
     eq8s.add_argument("--port", type=int, default=11000)
 
+    eq8r = sub.add_parser("eq8-reset-gains", help="Reset all EQ Eight band gains to 0 dB (requires eq8-map)")
+    eq8r.add_argument("track_id", type=int, help="Track index")
+    eq8r.add_argument("device_id", type=int, help="Device index")
+    eq8r.add_argument("--timeout", type=float, default=5.0)
+    eq8r.add_argument("--dry", action="store_true", help="Preview only, no write")
+    eq8r.add_argument("--host", default="127.0.0.1")
+    eq8r.add_argument("--port", type=int, default=11000)
+
     args = p.parse_args()
 
     if args.version:
@@ -255,6 +264,10 @@ def main() -> None:
 
     if args.cmd == "eq8-set":
         eq8_set(track_id=args.track_id, device_id=args.device_id, band=args.band, side=args.side, param=args.param, value=args.value, target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout, dry=args.dry)
+        return
+
+    if args.cmd == "eq8-reset-gains":
+        eq8_reset_gains(track_id=args.track_id, device_id=args.device_id, target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout, dry=args.dry)
         return
 
     p.print_help()
