@@ -1,151 +1,148 @@
 # PRIORITY CORRECTION
 
-**Date**: 2026-02-22 19:00 UTC
+**Date**: 2026-02-22 19:30 UTC
 
 ---
 
-## THE REAL BOTTLENECK (RESOLVED)
+## CRITICAL CORRECTION: Streaming Standards
 
-**Documentation got ahead of execution.**
+**Previous (INCORRECT)**:
+- Target: -8 LUFS = "Spotify ceiling"
+- Peak: -6 dBFS sample peak = "streaming spec"
+- Strategy: Limiter gain to max for loudness
 
-Discovery framework (DISCOVERY.md, NEXT_CHAPTER.md) maps 300-500 command generation strategy.
+**Corrected (Official Spotify documentation)**:
+- **Spotify official**: -14 LUFS integrated, -1 dBTP true peak
+- **Commercial releases**: -9 LUFS, -2 dBTP (what most music targets)
+- **True peak (dBTP)**: Required (4x oversampling, codec safety)
+- **Strategy**: Compression → Saturation → Limiting (3-stage processing)
+- **Diminishing returns**: Stop limiter when < 0.2 LU improvement
 
-**Was blocked**: Export loop crash prevented iteration
-
-**Now**: Export loop functional ✅ Manual iteration working (16 experiments complete)
-
----
-
-## CLOSED-LOOP AUDIO ITERATION
-
-**The loop**:
-```
-configure → export → verify-audio → adjust → repeat
-```
-
-**Current state**: Loop **FUNCTIONAL** (manual iteration working)
-
-**Latest result**: LUFS -13.59, Peak -6.00 (gap 3.09 LU to target)
-
-**Remaining work**: Tune compression to close LUFS gap
+**See**: `docs/reference/STREAMING_STANDARDS.md` for official platform specs
 
 ---
 
-## IMMEDIATE ACTION (UPDATED)
+## RIGHT NOW (User Action Required)
 
-**Export loop unblocked** - Manual iteration working ✅
+**User feedback**: "Super quiet, can barely hear it"
 
-**Next iteration** (in Ableton):
-1. Glue Compressor: Lower Threshold → GR 15-18 dB
-2. Glue Compressor: Makeup +15-18 dB
-3. Limiter: Gain +28-30 dB, Ceiling -6.5 dB
-4. Export → `output/master_iter<N>.wav`
+**Solution**: Run `flaas master-consensus --mode loud_preview`
 
-**After export**:
+**What was corrected**:
+1. **Mode-based targets** (streaming_safe vs loud_preview vs headroom)
+2. **Saturator support** (optional, recommended for RMS boost)
+3. **True peak measurement** (dBTP via 4x oversampling)
+4. **Diminishing returns detection** (stops pushing limiter when ineffective)
+5. **Adaptive algorithm** (prioritizes Saturator/compression over extreme limiter gain)
+
+**Command**:
 ```bash
-flaas verify-audio output/master_iter<N>.wav
+cd /Users/trev/Repos/finishline_audio_repo
+source .venv/bin/activate
+
+# Add Saturator to Master chain in Ableton (if not already present)
+# Chain order: Utility → EQ → Glue Compressor → Saturator → Limiter
+
+flaas master-consensus --mode loud_preview
 ```
 
-**Goal**: Close 3.09 LU gap (-13.59 → -10.50 LUFS) while maintaining peak ≤ -6.00
+**Expected output**: `output/master_loud_preview.wav` (LOUD, full, smooth)
+
+**Checklist**: See `HUMAN_ACTIONS_REQUIRED.md` for complete pre-run setup
 
 ---
 
-## DOCUMENTATION GAP FIXED
+## IMPLEMENTATION STATUS
 
-**Problem**: `all_osc_endpoints.txt` contains patterns, not specifications
+### ✅ COMPLETE (All Code Implemented)
 
-**Missing**: Arg types, response shapes, safety rules, critical quirks
+**1. Smoke Tests (Three Lanes)**:
+- `make smoke`: 7s, 8 tests (read-only)
+- `make write-fast`: 9s, 4 tests (dev gate)
+- `make write`: 39s, 13 tests (commit gate, includes plugin test)
+- Exit codes: 0 (pass), 10 (skip), 20 (read failure), 30 (write failure)
 
-**Solution**: `docs/ENDPOINT_REGISTRY.json` provides proper specification structure
+**2. Master Track Control**:
+- `MASTER_TRACK_ID = -1000` (shared constant)
+- Dynamic Utility device resolution (case-insensitive)
+- `flaas plan-gain`, `apply`, `verify` all use master track correctly
 
-**Example entries**:
-- `/live/track/get/volume` - read track fader level
-- `/live/track/set/volume` - write track fader level
-- `/live/device/get/parameters/value` - read all device params
-- `/live/track/get/devices/name` - get device names (CRITICAL: drop first element)
-
-**Template**: Includes category, args (name/type/range/example), response (type/shape/example), safety (read_only/write_safe/revertable), notes
-
----
-
-## SYSTEM ARCHITECTURE (CONFIRMED CORRECT)
-
-```
-Ableton Live (the set)
-    ↓
-AbletonOSC Remote Script (exposes /live/* OSC endpoints)
-    ↓
-OSC UDP bridge (request/response + listeners)
-    ↓
-FLAAS (Python CLI + modules + tests)
-```
-
-**Goal**: Mirror Ableton's control surface in Python  
-**Method**: Map OSC endpoints → Python commands  
-**Current coverage**: ~15 commands, ~60 control points  
-**Target**: 300-500 commands, 95%+ coverage
-
----
-
-## NON-NEGOTIABLE INVARIANTS (CAPTURED)
-
-1. **Master track_id = -1000** (returns negative, regular 0..N)
-2. `/live/track/get/devices/name` returns `(track_id, name0, name1, ...)` - **drop index 0**
-3. **Master fader is post-device chain** - Must be 0.0 dB for predictable peak control
-4. **Limiter alone insufficient** - Need compression before limiter for loudness
-5. **Export settings**: Rendered Track = Master, Normalize = OFF
-
----
-
-## NEXT STEPS (UPDATED PRIORITY)
-
-### 1. Close LUFS Gap (IMMEDIATE) ✅ IN PROGRESS
-- Tune compression (GR 15-18 dB, Makeup 15-18 dB)
-- Adjust limiter (Gain 28-30 dB, Ceiling -6.5 dB)
-- Export + verify → Iterate until targets hit
-- **Status**: Manual workflow functional, 3.09 LU gap remaining
-
-### 2. Automate Master Processing ✅ COMPLETE
-- **Export automation via macOS UI automation** (AppleScript keystroke sequence)
-- ✅ Glue Compressor OSC control (threshold, makeup, ratio)
-- ✅ Limiter OSC control (ceiling, gain)
-- ✅ Batch experiment runner (fully automated on macOS)
+**3. Export Loop (CORRECTED)**:
+- ✅ macOS UI automation via AppleScript (Cmd+Shift+R → keystrokes)
+- ✅ File stabilization wait (size + mtime)
+- ✅ Audio verification (LUFS, sample peak, **true peak dBTP**)
+- ✅ JSONL logging
 - ⚠️ Master fader (manual pre-run check, no OSC endpoint)
-- **ROI**: 4-5x speedup, zero clicks on macOS with permissions
 
-### 3. Populate Endpoint Registry (PARALLEL TO AUTOMATION)
-- Fill `docs/ENDPOINT_REGISTRY.json` with top 50 endpoints
-- Include full specification per endpoint
-- Prioritize track/device/song controls
-
-### 4. Generate Commands (AFTER REGISTRY COMPLETE)
-- Use registry as source of truth
-- Generate Python modules + CLI parsers + tests
-- Batch validate via terminal
+**4. Master Consensus Generator (CORRECTED)**:
+- ✅ Mode-based targets (streaming_safe, loud_preview, headroom)
+- ✅ Saturator support (optional, recommended)
+- ✅ True peak measurement (dBTP, 4x oversampling)
+- ✅ Diminishing returns detection
+- ✅ Adaptive algorithm (compression + saturation, not just limiter)
+- ✅ Up to 15 iterations
+- Output: `output/master_{mode}.wav`, `output/master_{mode}.jsonl`
 
 ---
 
-## DOC ROLES (CLARIFIED)
+## NEXT ACTIONS
 
-- **STATE.md** - Volatile operational truth (what's applied, what's blocked, next action)
-- **PRIORITY.md** (this file) - Execution order correction
-- **ENDPOINT_REGISTRY.json** - Canonical spec (bridge between patterns and codegen)
-- **DISCOVERY.md** - Research plan + taxonomy
-- **NEXT_CHAPTER.md** - Execution strategy (10→100→1000)
-- **all_osc_endpoints.txt** - Raw inventory (108 patterns)
+**IMMEDIATE (User)**:
+1. Add **Saturator** to Master chain (if missing): `Glue → Saturator → Limiter`
+2. Verify Master fader = 0.0 dB
+3. Run: `flaas master-consensus --mode loud_preview`
+4. Listen to `output/master_loud_preview.wav`
+5. Paste results to chat
 
----
-
-## SINGLE MOST IMPORTANT THING (UPDATED)
-
-**Close the LUFS gap (3.09 LU remaining).**
-
-Manual iteration loop is functional. Next: Automate master processing to eliminate manual export bottleneck.
-
-**Then**: Scale to comprehensive control coverage (endpoint expansion, command generation).
+**AFTER CONSENSUS MASTER**:
+- Close loop on loudness optimization
+- Begin systematic control discovery (unblocked)
 
 ---
 
-**Export loop unblocked** ✅ **Manual iteration functional** ✅ **Gap: 3.09 LU**
+## CRITICAL FACTS
 
-**See**: `docs/reference/EXPORT_FINDINGS.md` for complete triage findings (16 experiments)
+### Streaming Standards (Official)
+- **Spotify**: -14 LUFS, -1 dBTP (official spec)
+- **Apple Music**: -16 LUFS, -1 dBTP
+- **Commercial releases**: -9 LUFS, -2 dBTP (competitive)
+- **True peak (dBTP)**: Required for codec safety
+
+### Master Chain Position
+- **Master fader**: POST-device chain (after Limiter)
+- **Implication**: Boosting fader defeats limiter ceiling
+- **Rule**: Must remain at 0.0 dB for predictable control
+
+### Loudness Strategy
+1. Compression (Glue) - Control dynamics, raise RMS
+2. Saturation (Saturator) - Soft clip, raise RMS efficiently
+3. Limiting (Limiter) - Catch peaks, final safety
+4. **Limiter alone is insufficient** (observed in experiments)
+
+### Track Indexing
+- Regular: 0, 1, 2, ...
+- Returns: -1, -2, -3, ...
+- **Master: -1000**
+
+---
+
+## COMMANDS
+
+```bash
+# Master consensus (CORRECTED)
+flaas master-consensus --mode loud_preview     # -9 LUFS, -2 dBTP (default, LOUD)
+flaas master-consensus --mode streaming_safe   # -14 LUFS, -1 dBTP (official Spotify)
+flaas master-consensus --mode headroom         # -10 LUFS, -6 dBFS (internal)
+
+# Audio verification
+flaas verify-audio <wav>  # Now shows true peak (dBTP)
+
+# Smoke tests
+make smoke       # 7s, read-only
+make write-fast  # 9s, dev gate
+make write       # 39s, commit gate
+```
+
+---
+
+**Single source of truth for operational state. No redundant documentation.**

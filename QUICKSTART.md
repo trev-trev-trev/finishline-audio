@@ -4,21 +4,65 @@
 
 ## Current Status
 
-**Export loop WORKING** ✅ Manual iteration functional
+**Master consensus generator CORRECTED** ✅
 
-**Latest**: LUFS -13.59, Peak -6.00 (gap to target: 3.09 LU)
+**Addressing**: "Super quiet, can barely hear it"
 
-**Loop**: `configure → export → verify-audio → adjust → repeat`
+**Solution**: Use `loud_preview` mode with Saturator for competitive commercial loudness
 
-**Next**: Close LUFS gap via compression tuning
+## NOW: Generate LOUD Master
+
+**User reported**: "super quiet, can barely hear it"
+
+**Solution**: Use `loud_preview` mode with Saturator for competitive commercial loudness
+
+```bash
+cd /Users/trev/Repos/finishline_audio_repo
+source .venv/bin/activate
+
+# Add Saturator to Master chain in Ableton (before Limiter)
+# Chain: Utility → EQ → Glue → Saturator → Limiter
+
+flaas master-consensus --mode loud_preview  # -9 LUFS, -2 dBTP (competitive)
+```
+
+**Output**: `output/master_loud_preview.wav` (LOUD, full, smooth)
+
+**Other modes**:
+- `--mode streaming_safe`: -14 LUFS, -1 dBTP (official Spotify, quieter)
+- `--mode headroom`: -10 LUFS, -6 dBFS (internal safety)
+
+**See**: `docs/reference/STREAMING_STANDARDS.md` for official platform specs
+
+---
+
+## Key Corrections (Per User Feedback)
+
+**Previous (INCORRECT)**:
+- Target: -8 LUFS = "Spotify ceiling"
+- Safety: -6 dBFS sample peak
+- Strategy: Limiter gain to max
+
+**Corrected (Official Spotify docs)**:
+- **Spotify official spec**: -14 LUFS, -1 dBTP
+- **Commercial releases**: -9 LUFS, -2 dBTP (what most music targets)
+- **True peak (dBTP)**: Required for codec safety (not just sample peak)
+- **Strategy**: Compression + Saturation + Limiting (3-stage, not just limiter)
+- **Diminishing returns**: Stop pushing limiter when < 0.2 LU improvement
+
+**Master fader position**: POST-chain (defeats limiter if boosted) ← Already documented/observed
+
+---
 
 ## Key Files (Priority Order)
 
 1. `STATE.md` - Current operational state
-2. `PRIORITY.md` - Execution order correction
-3. `docs/ENDPOINT_REGISTRY.json` - OSC endpoint specifications
-4. `DISCOVERY.md` / `NEXT_CHAPTER.md` - Blocked until export works
-5. `docs/status/STATUS.md` - Operating procedures
+2. `HUMAN_ACTIONS_REQUIRED.md` - Run checklist
+3. `docs/reference/STREAMING_STANDARDS.md` - Official specs (NEW)
+4. `docs/reference/MASTERING_RECIPE.md` - Technical guide
+5. `docs/reference/EXPORT_FINDINGS.md` - Experiment findings
+
+---
 
 ## Commands
 
@@ -31,43 +75,30 @@ make write       # 39s, commit gate
 # Audio verification
 flaas verify-audio <wav>  # Check LUFS/peak vs targets
 
-# Automated mastering (NEW)
-flaas master-candidates           # Generate 3 curated masters (zero clicks)
-flaas experiment-run <config.json>  # Custom parameter sweep
+# Automated mastering (CORRECTED)
+flaas master-consensus --mode loud_preview     # -9 LUFS (competitive, LOUD)
+flaas master-consensus --mode streaming_safe   # -14 LUFS (official Spotify)
+flaas master-consensus --mode headroom         # -10 LUFS (internal)
 ```
 
-## Next Action (Fully Automated)
+---
 
-**Generate ONE consensus master** (zero clicks, properly loud):
-```bash
-flaas master-consensus
-```
+## macOS Permissions (One-Time Setup)
 
-**What happens**:
-1. Up to 10 iterations with adaptive optimization
-2. Target: **LUFS -9.0** (competitive loudness, NOT quiet)
-3. Auto-sets params (Glue, Limiter) via OSC
-4. Auto-exports via macOS UI automation (no clicks)
-5. Auto-verifies LUFS/peak
-6. Stops when within 0.3 LU of target
-7. Logs to `output/master_consensus.jsonl`
-
-**Output**: ONE thoroughly optimized WAV (`output/master_consensus.wav`)
-
-**Goal**: High-quality, properly loud master (NOT the quiet -10.5 target)
-
-**Alternative - 3 variants**:
-```bash
-flaas master-candidates  # Generates 3 different presets
-```
-
-**macOS Permissions Required** (one-time):
+**Required for auto-export**:
 - System Settings → Privacy & Security → Accessibility → Terminal ON
 - System Settings → Privacy & Security → Automation → Terminal → System Events ON
 
-**Pre-requisites**:
-- Ableton Live running with project open
-- Export defaults set: Rendered Track = Master, Normalize = OFF
-- Loop/selection set to desired range (4-8 bars)
+---
 
-**See usage guide**: `docs/reference/EXPERIMENT_RUNNER_USAGE.md`
+## Pre-requisites (Before Running)
+
+- Ableton Live running with project open
+- Master fader = 0.0 dB (CRITICAL)
+- Device chain: Utility → EQ → Glue → **Saturator** → Limiter (all ON)
+- Export defaults: Rendered Track = Master, Normalize = OFF
+- Loop/selection = 8 bars
+
+---
+
+**Ready to run**: `flaas master-consensus --mode loud_preview`
