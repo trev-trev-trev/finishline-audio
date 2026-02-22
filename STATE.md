@@ -7,21 +7,27 @@
 
 ## CURRENT TASK
 
-**Export loop FUNCTIONAL** - Manual iteration working ✅
+**Semi-automated batch runner READY** ✅
+
+**Command**: `flaas experiment-run data/experiments/master_sweep.json`
 
 **Latest result**: LUFS -13.59, Peak -6.00 (experiment #14: Glue + Limiter)
 
 **Gap to target**: 3.09 LU (-13.59 → -10.50)
 
-**Next iteration**: Increase compression (GR 15-18 dB, Makeup 15-18 dB, Limiter gain 28-30)
+**Next action**: Run batch experiment (3 runs: GR 12-18 dB, Makeup 15-20 dB, Limiter 28-32 dB)
 
-**Automation status**: Export trigger NOT available via OSC (verified)
+**Automation status**: 
+- ✅ Parameter control (Glue, Limiter) automated
+- ✅ Verification automated (LUFS, peak)
+- ✅ Logging automated (JSONL receipts)
+- ❌ Export trigger (manual click required per experiment)
 
-**Roadmap**: Semi-automated approach (params + verify automated, export manual)
+**ROI**: 4-5x speedup (7 min vs 30 min for 10 experiments)
 
 **See**: 
+- `docs/reference/EXPERIMENT_RUNNER_USAGE.md` - Usage guide
 - `docs/reference/EXPORT_FINDINGS.md` - Triage findings (16 experiments)
-- `docs/reference/EXPORT_AUTOMATION_FEASIBILITY.md` - OSC probe results
 - `docs/reference/AUTOMATION_ROADMAP.md` - Implementation phases
 
 ---
@@ -151,7 +157,20 @@ make write       # 39s, 13 tests (commit gate)
 
 ## NEXT ACTION
 
-**Manual iteration**: Increase compression (GR 15-18 dB, Makeup 15-18 dB, Limiter gain 28-30)
+**Test batch runner** (semi-automated):
+
+```bash
+flaas experiment-run data/experiments/master_sweep.json
+```
+
+**What happens**:
+1. Auto-sets params via OSC (Glue, Limiter, Master fader)
+2. Pauses for manual export (prints filename)
+3. Auto-verifies (LUFS, peak)
+4. Logs to `output/experiments.jsonl`
+5. Early exit on success (targets hit)
+
+**Config**: 3 experiments (GR 12-18 dB, Makeup 15-20 dB, Limiter 28-32 dB)
 
 **Goal**: Close 3.09 LU gap (-13.59 → -10.50) while maintaining peak ≤ -6.00
 
