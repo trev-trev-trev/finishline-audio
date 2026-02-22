@@ -15,9 +15,14 @@
 
 **Next iteration**: Increase compression (GR 15-18 dB, Makeup 15-18 dB, Limiter gain 28-30)
 
-**See**: `docs/reference/EXPORT_FINDINGS.md` for complete triage findings
+**Automation status**: Export trigger NOT available via OSC (verified)
 
-**Future work**: Automate compression/limiting control, scripted export (see DISCOVERY.md)
+**Roadmap**: Semi-automated approach (params + verify automated, export manual)
+
+**See**: 
+- `docs/reference/EXPORT_FINDINGS.md` - Triage findings (16 experiments)
+- `docs/reference/EXPORT_AUTOMATION_FEASIBILITY.md` - OSC probe results
+- `docs/reference/AUTOMATION_ROADMAP.md` - Implementation phases
 
 ---
 

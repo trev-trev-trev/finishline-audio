@@ -106,10 +106,12 @@ FLAAS (Python CLI + modules + tests)
 - **Status**: Manual workflow functional, 3.09 LU gap remaining
 
 ### 2. Automate Master Processing (AFTER LUFS TARGET HIT)
+- **Export trigger NOT available via OSC** (verified: `/live/song/export/structure` returns `(1,)`)
+- **Semi-automated approach**: Automate params + verify, manual export click
 - Add Glue Compressor OSC control (threshold, makeup, ratio)
 - Add master fader OSC control (get/set volume)
-- Implement auto-adjustment algorithm
-- Replace manual iteration with scripted loop
+- Build batch experiment runner (pause for manual export)
+- **ROI**: 10x speedup (only export click is manual)
 
 ### 3. Populate Endpoint Registry (PARALLEL TO AUTOMATION)
 - Fill `docs/ENDPOINT_REGISTRY.json` with top 50 endpoints
