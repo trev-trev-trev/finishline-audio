@@ -2,6 +2,7 @@ import argparse
 from flaas.osc import OscTarget, send_ping
 from flaas.scan import write_model_cache
 from flaas.analyze import write_analysis
+from flaas.check import write_check
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -19,6 +20,10 @@ def main() -> None:
     analyze = sub.add_parser("analyze", help="Analyze a WAV and write analysis.json")
     analyze.add_argument("wav")
     analyze.add_argument("--out", default="data/reports/analysis.json")
+
+    check = sub.add_parser("check", help="Check WAV against compliance targets")
+    check.add_argument("wav")
+    check.add_argument("--out", default="data/reports/check.json")
 
     args = p.parse_args()
 
@@ -38,6 +43,11 @@ def main() -> None:
 
     if args.cmd == "analyze":
         out = write_analysis(args.wav, args.out)
+        print(str(out))
+        return
+
+    if args.cmd == "check":
+        out = write_check(args.wav, args.out)
         print(str(out))
         return
 
