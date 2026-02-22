@@ -15,7 +15,27 @@
 
 ---
 
-## The Command
+## Pre-Flight: Test Export (30 seconds)
+
+**FIRST**: Verify auto-export works (critical for determinism)
+
+```bash
+cd /Users/trev/Repos/finishline_audio_repo
+source .venv/bin/activate
+
+# Test that export goes to correct location
+./scripts/test_export_probe.sh
+```
+
+**Expected**: File appears at `output/_probe.wav`, verify passes, cleanup succeeds
+
+**If fails**: Check debug output (shows where file went via mdfind)
+
+---
+
+## The Final Command
+
+**AFTER export probe passes**:
 
 ```bash
 cd /Users/trev/Repos/finishline_audio_repo
@@ -24,7 +44,7 @@ source .venv/bin/activate
 # Ensure Saturator is in Master chain (if missing, add it):
 # Chain: Utility → EQ → Glue Compressor → Saturator → Limiter
 
-flaas master-consensus --mode loud_preview
+flaas master-consensus --mode loud_preview && echo "----" && ls -lh output/master_loud_preview.wav && echo "----" && tail -n 20 output/master_loud_preview.jsonl
 ```
 
 **Output**: `output/master_loud_preview.wav`
@@ -151,4 +171,26 @@ cat output/master_loud_preview.jsonl | jq .
 
 ---
 
-**Run it. Check STOP_REASON. Listen. If sounds good at achieved LUFS, you're done.**
+**Run export probe first** (`./scripts/test_export_probe.sh`), **then** run final command.
+
+**Check STOP_REASON. Listen. If sounds good at achieved LUFS, you're done.**
+
+---
+
+## Debug Mode (If Export Fails)
+
+**Enable debug logging**:
+```bash
+export FLAAS_UI_EXPORT_DEBUG=1
+./scripts/test_export_probe.sh
+```
+
+**Shows**:
+- AppleScript step markers
+- File growth during stabilization
+- mdfind results if file goes to wrong location
+
+**Common issues**:
+- Plugin windows blocking dialog (script tries to close them)
+- Ableton not frontmost (script brings it forward)
+- Export saved to ~/Documents instead of repo/output (mdfind will show this)
