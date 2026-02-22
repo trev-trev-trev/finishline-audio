@@ -1,0 +1,247 @@
+{
+  "generated_at_utc": "2026-02-22T08:58:00Z",
+  "repo_url": "https://github.com/trev-trev-trev/finishline-audio",
+  "package": {
+    "name": "flaas",
+    "version": "0.0.2"
+  },
+  "ports": {
+    "abletonosc_listen_udp": 11000,
+    "abletonosc_reply_udp": 11001
+  },
+  "assumptions": {
+    "track_id_master": 0,
+    "device_id_utility": 0,
+    "utility_class_name": "StereoGain",
+    "utility_gain_param_id": 9,
+    "param_value_is_normalized_0_1": true
+  },
+  "workflow_process": [
+    "Cursor agent applies code changes",
+    "Run terminal validation commands",
+    "Paste output back to ChatGPT",
+    "Repeat one-step commands"
+  ],
+  "endpoints_used": {
+    "health": {
+      "/live/test": {
+        "arg": "ok",
+        "reply_expected": true
+      }
+    },
+    "scan": [
+      "/live/song/get/num_tracks",
+      "/live/song/get/track_names",
+      "/live/track/get/num_devices",
+      "/live/track/get/devices/name",
+      "/live/track/get/devices/class_name"
+    ],
+    "device_params": [
+      "/live/device/get/parameters/name",
+      "/live/device/get/parameters/min",
+      "/live/device/get/parameters/max",
+      "/live/device/get/parameter/value",
+      "/live/device/set/parameter/value"
+    ]
+  },
+  "completed_steps": [
+    {
+      "step": 0,
+      "title": "Git/GitHub bridge established",
+      "receipt": "HTTPS auth failed; switched to SSH; push to main working."
+    },
+    {
+      "step": 1,
+      "title": "Repo initialized + first pushes",
+      "receipt": "Remote set; commits pushed to origin/main."
+    },
+    {
+      "step": 2,
+      "title": "Create repo structure folders",
+      "receipt": "data/{caches,reports,actions,timelines,profiles} + input/output + tests created."
+    },
+    {
+      "step": 3,
+      "title": "Add .gitkeep placeholders + push",
+      "receipt": "Folders tracked cleanly."
+    },
+    {
+      "step": 4,
+      "title": "Set git identity",
+      "receipt": "user.name=Trevor Reynolds; user.email set."
+    },
+    {
+      "step": 5,
+      "title": "Add .gitignore",
+      "receipt": "Ignore OS/editor, python env, audio, generated json, logs."
+    },
+    {
+      "step": 6,
+      "title": "Python package skeleton (src layout)",
+      "receipt": "pyproject.toml + src/flaas + CLI entrypoint created."
+    },
+    {
+      "step": 7,
+      "title": "Create venv + install editable",
+      "receipt": "python3 -m venv .venv; pip install -e .; flaas --version works."
+    },
+    {
+      "step": 8,
+      "title": "OSC ping (fire-and-forget)",
+      "receipt": "flaas ping sends /live/test."
+    },
+    {
+      "step": 9,
+      "title": "Ignore build artifacts",
+      "receipt": "*.egg-info removed from git and ignored."
+    },
+    {
+      "step": 10,
+      "title": "Scan stub writes model_cache.json",
+      "receipt": "flaas scan creates data/caches/model_cache.json."
+    },
+    {
+      "step": 11,
+      "title": "Validate scan stub output",
+      "receipt": "cat data/caches/model_cache.json shows stub payload."
+    },
+    {
+      "step": 12,
+      "title": "WAV analyzer added",
+      "receipt": "peak dBFS + LUFS-I to data/reports/analysis.json."
+    },
+    {
+      "step": 13,
+      "title": "Validate analyzer",
+      "receipt": "Generated sine WAV; analysis produced expected peak/LUFS values."
+    },
+    {
+      "step": 14,
+      "title": "Compliance targets + check command",
+      "receipt": "flaas check writes data/reports/check.json (pass/fail flags)."
+    },
+    {
+      "step": 15,
+      "title": "Ignore generated report JSON",
+      "receipt": "data/reports/*.json ignored; removed tracked analysis.json."
+    },
+    {
+      "step": 16,
+      "title": "Validate check output",
+      "receipt": "flaas check input/test.wav shows LUFS fail, peak pass."
+    },
+    {
+      "step": 17,
+      "title": "Plan actions (plan-gain)",
+      "receipt": "Generate data/actions/actions.json from analysis."
+    },
+    {
+      "step": 18,
+      "title": "Validate planned actions file",
+      "receipt": "cat data/actions/actions.json shows planned Utility.Gain action."
+    },
+    {
+      "step": 19,
+      "title": "Apply dry-run",
+      "receipt": "flaas apply prints DRY_RUN action lines."
+    },
+    {
+      "step": 20,
+      "title": "Makefile dev target",
+      "receipt": "make dev sets up venv + editable install."
+    },
+    {
+      "step": 21,
+      "title": "README quickstart",
+      "receipt": "README.md added with commands/structure."
+    },
+    {
+      "step": 22,
+      "title": "OSC request/response (RPC) ping",
+      "receipt": "Added listener on 11001; request_once() added."
+    },
+    {
+      "step": 23,
+      "title": "Install AbletonOSC remote script",
+      "receipt": "Cloned AbletonOSC into User Library Remote Scripts; loaded in Live."
+    },
+    {
+      "step": 24,
+      "title": "Fix /live/test argument",
+      "receipt": "Ping now sends 'ok' and expects ('ok',) reply."
+    },
+    {
+      "step": 25,
+      "title": "Real OSC connectivity verified",
+      "receipt": "flaas ping --wait returns ok: ('ok',)."
+    },
+    {
+      "step": 26,
+      "title": "Readback + getters exploration",
+      "receipt": "Moved to supported /live/song/get and /live/track/get endpoints."
+    },
+    {
+      "step": 27,
+      "title": "Real scan implemented",
+      "receipt": "scan_live() queries tracks/devices and fingerprints set."
+    },
+    {
+      "step": 28,
+      "title": "Utility device detection",
+      "receipt": "Track 0 device 0 shows Utility class StereoGain."
+    },
+    {
+      "step": 29,
+      "title": "Utility Gain param id discovered",
+      "receipt": "parameters/name shows Gain is param_id=9 (in names[2:])."
+    },
+    {
+      "step": 30,
+      "title": "Normalized parameter semantics",
+      "receipt": "Confirmed parameter/value uses 0..1; device min/max returned -1..1 for Utility Gain."
+    },
+    {
+      "step": 31,
+      "title": "Linear mapping utilities",
+      "receipt": "Added util-gain-norm and util-gain-linear; mapping via min/max to norm."
+    },
+    {
+      "step": 32,
+      "title": "Apply uses device param mapping",
+      "receipt": "apply writes Utility Gain param via /live/device/set/parameter/value."
+    },
+    {
+      "step": 33,
+      "title": "Loop + verify + reset",
+      "receipt": "loop (analyze\u2192plan\u2192apply), verify readback, reset center."
+    },
+    {
+      "step": 34,
+      "title": "Actions schema + fingerprint",
+      "receipt": "actions.json includes schema_version + live_fingerprint; apply enforces."
+    },
+    {
+      "step": 35,
+      "title": "Plan/apply stability",
+      "receipt": "apply is relative delta; plan emits bounded deltas (\u00b10.25) and loop stops near max."
+    },
+    {
+      "step": 36,
+      "title": "Version bump + docs",
+      "receipt": "bumped to 0.0.2; added remaining MVP blocks + manual loop docs."
+    },
+    {
+      "step": 37,
+      "title": "Export guide + verify-audio",
+      "receipt": "export-guide prints settings; verify-audio prints PASS/FAIL and exit code."
+    }
+  ],
+  "docs": [
+    "docs/mvp_remaining.md",
+    "docs/manual_loop.md"
+  ],
+  "limitations": [
+    "No automated Ableton export/rerender",
+    "Single actuator only (Utility Gain on track 0 device 0)"
+  ]
+}

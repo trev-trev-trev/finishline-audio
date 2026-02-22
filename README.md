@@ -24,18 +24,23 @@ source .venv/bin/activate
 * `flaas loop <wav>` — analyze → plan → apply
 * `flaas loop <wav> --dry` — preview only
 
+## Documentation
+
+**All documentation has been reorganized** into `docs/`. Start here:
+
+- **[docs/README.md](docs/README.md)** - Documentation overview and navigation
+- **[docs/workflow/protocol.md](docs/workflow/protocol.md)** - How this project was built (one-task terminal loop)
+- **[docs/workflow/terminal-cheatsheet.md](docs/workflow/terminal-cheatsheet.md)** - Command reference and troubleshooting
+- **[docs/reference/ENGINEERING_NOTEBOOK.md](docs/reference/ENGINEERING_NOTEBOOK.md)** - Comprehensive API reference
+- **[docs/project/mvp_remaining.md](docs/project/mvp_remaining.md)** - What's left to build
+
 ## Repo layout
 
 * `src/flaas/` — library + CLI
+* `docs/` — all documentation (workflow, reference, architecture, project planning)
 * `data/` — caches/reports/actions (generated, mostly ignored by git)
 * `input/` — local audio inputs (ignored)
 * `output/` — renders/exports (ignored)
 
 ## Note on Utility Gain
-Utility “Gain” via AbletonOSC device parameters is exposed as a normalized control (often with min=-1, max=1). Current MVP treats gain actions as *linear* values mapped into normalized 0..1.
-
-## Next MVP milestones
-
-* Real AbletonOSC model scan (tracks/devices/params)
-* Action apply via OSC + readback
-* Iteration loop: export → analyze → plan → apply → re-export → verify
+Utility "Gain" via AbletonOSC device parameters is exposed as a normalized control (often with min=-1, max=1). Current MVP treats gain actions as *linear* values mapped into normalized 0..1.
