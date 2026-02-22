@@ -1,0 +1,60 @@
+{
+  "total_unique_lines": 469,
+  "total_occurrences": 619,
+  "files_processed": 18,
+  "categories": {
+    "logic": 278,
+    "imports": 41,
+    "decorators": 2,
+    "definitions": 35,
+    "file_io": 7,
+    "planning": 12,
+    "safety": 19,
+    "constants": 2,
+    "osc_calls": 17,
+    "cli_wiring": 52,
+    "comments": 4
+  },
+  "most_repeated": [
+    [
+      "from __future__ import annotations",
+      15
+    ],
+    [
+      "return",
+      15
+    ],
+    [
+      ")",
+      11
+    ],
+    [
+      "from pathlib import Path",
+      9
+    ],
+    [
+      "\"\"\"",
+      8
+    ],
+    [
+      "@dataclass",
+      7
+    ],
+    [
+      "from dataclasses import dataclass",
+      7
+    ],
+    [
+      "@dataclass(frozen=True)",
+      7
+    ],
+    [
+      "import json",
+      5
+    ],
+    [
+      "return out",
+      5
+    ]
+  ]
+}

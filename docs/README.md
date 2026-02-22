@@ -38,6 +38,7 @@ flaas scan
 3. **[workflow/terminal-cheatsheet.md](workflow/terminal-cheatsheet.md)** - Command quick reference + troubleshooting
 4. **[workflow/manual_loop.md](workflow/manual_loop.md)** - Current manual iteration workflow
 5. **[reference/ENGINEERING_NOTEBOOK.md](reference/ENGINEERING_NOTEBOOK.md)** - Comprehensive API/function catalog
+6. **[reference/unique-lines/INDEX.md](reference/unique-lines/INDEX.md)** - Unique line ledger (complete code transparency)
 
 ### For New Contributors
 1. Read `reference/FINISHLINE_PROGRESS_INDEX.md` for current state

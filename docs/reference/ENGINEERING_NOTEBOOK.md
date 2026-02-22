@@ -2154,7 +2154,103 @@ for item in obj.get("some_list", []):
 
 ---
 
+## 12. Unique Line Ledger
+
+For maximum transparency, every unique line of code in the FLAAS codebase has been cataloged with all its occurrences.
+
+### Overview
+
+- **Location**: `docs/reference/unique-lines/`
+- **Total unique lines**: 469
+- **Total occurrences**: 619 (some lines appear in multiple files)
+- **Files processed**: 18 Python modules in `src/flaas/`
+
+### Categories
+
+The ledger is split into 11 category files for easier navigation:
+
+| Category | Unique Lines | Description |
+|----------|-------------|-------------|
+| **[logic.md](unique-lines/logic.md)** | 278 | Core logic, control flow, computations |
+| **[cli_wiring.md](unique-lines/cli_wiring.md)** | 52 | CLI argument parsing, command routing |
+| **[imports.md](unique-lines/imports.md)** | 41 | Import statements |
+| **[definitions.md](unique-lines/definitions.md)** | 35 | Function and class definitions |
+| **[safety.md](unique-lines/safety.md)** | 19 | Assertions, error handling, validation |
+| **[osc_calls.md](unique-lines/osc_calls.md)** | 17 | OSC communication (send/receive) |
+| **[planning.md](unique-lines/planning.md)** | 12 | Planning and decision logic |
+| **[file_io.md](unique-lines/file_io.md)** | 7 | Filesystem operations |
+| **[comments.md](unique-lines/comments.md)** | 4 | Inline comments |
+| **[constants.md](unique-lines/constants.md)** | 2 | Global constants |
+| **[decorators.md](unique-lines/decorators.md)** | 2 | Decorators (@dataclass, etc.) |
+
+### Most Repeated Lines
+
+Top 10 lines that appear in multiple files:
+
+1. `from __future__ import annotations` - 15 occurrences (all modules)
+2. `return` - 15 occurrences
+3. `)` - 11 occurrences (end of multi-line calls)
+4. `from pathlib import Path` - 9 occurrences
+5. `"""` - 8 occurrences (docstrings)
+6. `@dataclass` - 7 occurrences
+7. `from dataclasses import dataclass` - 7 occurrences
+8. `@dataclass(frozen=True)` - 7 occurrences
+9. `import json` - 5 occurrences
+10. `return out` - 5 occurrences
+
+### Usage
+
+**Find all occurrences of a specific line**:
+```bash
+grep -r "line text" docs/reference/unique-lines/*.md
+```
+
+**See all OSC-related code**:
+```bash
+cat docs/reference/unique-lines/osc_calls.md
+```
+
+**Find repeated patterns**:
+```bash
+jq '.most_repeated' docs/reference/unique-lines/stats.json
+```
+
+### Regeneration
+
+To regenerate the ledger (e.g., after code changes):
+
+```bash
+python3 scripts/generate_unique_lines.py
+```
+
+**When to regenerate**:
+- After adding/removing modules
+- After significant refactoring
+- Before major releases (for audit)
+
+### Purpose
+
+1. **Transparency**: Every line of code is accounted for
+2. **Deduplication analysis**: Identify repeated patterns that could be factored out
+3. **Refactoring aid**: Find all instances of a pattern to change
+4. **Audit trail**: Track every line's usage across the codebase
+5. **Code review**: Spot inconsistencies or unexpected duplications
+
+### Example: Finding All Parameter Value Sets
+
+To find everywhere we set OSC parameter values:
+
+```bash
+grep "send_message.*parameter/value" docs/reference/unique-lines/osc_calls.md
+```
+
+This shows all files/lines where parameters are set via OSC.
+
+---
+
 **End of Engineering Notebook**
 
 For updates or additions, edit this file and commit.  
 For questions, cross-reference with source code (src/flaas/).
+
+**Unique Line Ledger**: See [unique-lines/INDEX.md](unique-lines/INDEX.md) for complete line-by-line transparency.

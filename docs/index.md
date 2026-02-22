@@ -34,6 +34,7 @@ New to the project? Read these in order:
 ### Reference
 - **[reference/finishline_context_state.json](reference/finishline_context_state.json)** - Machine-readable state
 - **[reference/FINISHLINE_PROGRESS_INDEX.md](reference/FINISHLINE_PROGRESS_INDEX.md)** - Step-by-step build history
+- **[reference/unique-lines/INDEX.md](reference/unique-lines/INDEX.md)** - Unique line ledger (code transparency)
 
 ### Workflow
 - **[workflow/manual_loop.md](workflow/manual_loop.md)** - Current manual iteration workflow
@@ -65,6 +66,7 @@ New to the project? Read these in order:
 - [ENGINEERING_NOTEBOOK.md](reference/ENGINEERING_NOTEBOOK.md) ⭐ **Comprehensive**
 - [FINISHLINE_PROGRESS_INDEX.md](reference/FINISHLINE_PROGRESS_INDEX.md) ⭐ **Current State**
 - [finishline_context_state.json](reference/finishline_context_state.json)
+- [unique-lines/INDEX.md](reference/unique-lines/INDEX.md) ⭐ **Code Transparency**
 
 ### UI (Future Work)
 - [ui-spec-running.md](ui/ui-spec-running.md) - Placeholder (no work until MVP complete)
