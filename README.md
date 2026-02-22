@@ -1,33 +1,32 @@
-# Finish Line Audio Automation (Backend MVP)
+# FLAAS (Finish Line Audio Automation System)
 
-This repo is the backend skeleton for controlling Ableton Live via **AbletonOSC** and running the first acceptance tests.
+Deterministic "technical compliance" automation for Ableton Live.
 
-## Prereqs
-- Ableton Live running with AbletonOSC enabled as a Control Surface.
-- AbletonOSC default ports:
-  - Live listens on UDP **11000**
-  - Live replies on UDP **11001**
-
-## Setup
+## Quickstart
 ```bash
-python -m venv .venv
-source .venv/bin/activate   # mac/linux
-# .venv\Scripts\activate  # windows
-pip install -r requirements.txt
+make dev
+source .venv/bin/activate
 ```
 
-## Configure
-Edit `config.yaml` if needed (host/ports/timeouts).
+## Commands
 
-## Run
-### 1) Ping AbletonOSC
-```bash
-python -m finishline_audio.cli ping
-```
+* `flaas --version`
+* `flaas ping` — fire-and-forget `/live/test` to AbletonOSC (default 127.0.0.1:11000)
+* `flaas scan` — writes `data/caches/model_cache.json` (stub for now)
+* `flaas analyze <wav>` — writes `data/reports/analysis.json` (peak dBFS + LUFS-I)
+* `flaas check <wav>` — writes `data/reports/check.json` (targets: LUFS -10.5 ±0.5, peak <= -6 dBFS)
+* `flaas plan-gain <wav>` — writes `data/actions/actions.json` (Utility gain delta, clamped ±6 dB)
+* `flaas apply` — prints actions (dry-run)
 
-### 2) Print track names
-```bash
-python -m finishline_audio.cli tracks
-```
+## Repo layout
 
-If `ping` fails, fix AbletonOSC installation first.
+* `src/flaas/` — library + CLI
+* `data/` — caches/reports/actions (generated, mostly ignored by git)
+* `input/` — local audio inputs (ignored)
+* `output/` — renders/exports (ignored)
+
+## Next MVP milestones
+
+* Real AbletonOSC model scan (tracks/devices/params)
+* Action apply via OSC + readback
+* Iteration loop: export → analyze → plan → apply → re-export → verify
