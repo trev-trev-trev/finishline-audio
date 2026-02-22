@@ -1,11 +1,20 @@
-# NEW CHAT CONTEXT
+# [OBSOLETE] NEW CHAT CONTEXT
 
-**Date:** 2026-02-22  
+**⚠️ THIS FILE IS OBSOLETE - SEE `START_HERE.md` INSTEAD**
+
+**Date:** 2026-02-22 (archived)  
 **Repo:** `/Users/trev/Repos/finishline_audio_repo`
 
-**PRIMARY DOCUMENTATION**: See `STATE.md` for complete operational state.
+**Current documentation**:
+- `START_HERE.md` - Entry point for new sessions
+- `STATE.md` - Current operational state
+- `QUICKSTART.md` - Quick reference
 
-This file provides extended context for new chat sessions.
+**This file is archived**. Information below is outdated (export loop is now functional).
+
+---
+
+## Historical Context (Archived)
 
 ---
 
