@@ -21,6 +21,7 @@ from flaas.eq8_map import generate_eq8_map
 from flaas.eq8_set import eq8_set
 from flaas.eq8_reset_gains import eq8_reset_gains
 from flaas.device_map import generate_device_map
+from flaas.limiter_set import limiter_set
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -163,6 +164,16 @@ def main() -> None:
     dm.add_argument("--host", default="127.0.0.1")
     dm.add_argument("--port", type=int, default=11000)
 
+    lim = sub.add_parser("limiter-set", help="Set Limiter param by semantic name (requires device-map)")
+    lim.add_argument("track_id", type=int, help="Track index")
+    lim.add_argument("device_id", type=int, help="Device index")
+    lim.add_argument("--param", choices=["gain", "ceiling", "release", "auto", "link", "lookahead"], required=True, help="Parameter name")
+    lim.add_argument("--value", type=float, required=True, help="Parameter value")
+    lim.add_argument("--timeout", type=float, default=5.0)
+    lim.add_argument("--dry", action="store_true", help="Preview only, no write")
+    lim.add_argument("--host", default="127.0.0.1")
+    lim.add_argument("--port", type=int, default=11000)
+
     args = p.parse_args()
 
     if args.version:
@@ -283,6 +294,10 @@ def main() -> None:
         import json
         data = json.load(open(path))
         print(f"WROTE {path} (class={data['device_class_name']} params={len(data['params'])})")
+        return
+
+    if args.cmd == "limiter-set":
+        limiter_set(track_id=args.track_id, device_id=args.device_id, param=args.param, value=args.value, target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout, dry=args.dry)
         return
 
     p.print_help()

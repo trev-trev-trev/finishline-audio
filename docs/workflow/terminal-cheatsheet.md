@@ -131,6 +131,7 @@ flaas verify-audio output/master.wav
 | `flaas eq8-map <t> <d>` | Generate EQ Eight param map JSON | OSC | `registry/*.json` | 0=ok |
 | `flaas eq8-set <t> <d> --band N --side A/B --param gain --value V` | Set EQ Eight by semantic name | Map+OSC | OSC params | 0=ok |
 | `flaas eq8-reset-gains <t> <d>` | Reset all EQ band gains to 0 dB | Map+OSC | OSC params | 0=ok |
+| `flaas limiter-set <t> <d> --param ceiling --value V` | Set Limiter by semantic name | Map+OSC | OSC params | 0=ok |
 | `flaas eq8-set-param --param-id N --value V` | Set param on selected device | OSC | OSC params | 0=ok |
 | `flaas device-set-param <t> <d> --param-id N --value V` | Set any device param (generic) | OSC | OSC params | 0=ok |
 
