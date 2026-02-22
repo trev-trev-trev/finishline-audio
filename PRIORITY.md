@@ -4,13 +4,15 @@
 
 ---
 
-## THE REAL BOTTLENECK
+## THE REAL BOTTLENECK (RESOLVED)
 
 **Documentation got ahead of execution.**
 
 Discovery framework (DISCOVERY.md, NEXT_CHAPTER.md) maps 300-500 command generation strategy.
 
-**But**: Can't execute that strategy until **export loop works**.
+**Was blocked**: Export loop crash prevented iteration
+
+**Now**: Export loop functional ✅ Manual iteration working (16 experiments complete)
 
 ---
 
@@ -18,28 +20,33 @@ Discovery framework (DISCOVERY.md, NEXT_CHAPTER.md) maps 300-500 command generat
 
 **The loop**:
 ```
-plan-gain → apply → export → verify-audio → adjust → repeat
+configure → export → verify-audio → adjust → repeat
 ```
 
-**Current state**: Loop **BLOCKED at export** (third-party plugins hang render)
+**Current state**: Loop **FUNCTIONAL** (manual iteration working)
 
-**Until this works**: Endpoint expansion is premature
+**Latest result**: LUFS -13.59, Peak -6.00 (gap 3.09 LU to target)
+
+**Remaining work**: Tune compression to close LUFS gap
 
 ---
 
-## IMMEDIATE ACTION
+## IMMEDIATE ACTION (UPDATED)
 
-**In Ableton**:
-1. Disable **ValhallaSpaceModulator** (track 41, device 1)
-2. Disable **StudioVerse** (track 41, device 2)
-3. Attempt **4-8 bar export** to `output/master_iter1.wav`
+**Export loop unblocked** - Manual iteration working ✅
 
-**After export succeeds**:
+**Next iteration** (in Ableton):
+1. Glue Compressor: Lower Threshold → GR 15-18 dB
+2. Glue Compressor: Makeup +15-18 dB
+3. Limiter: Gain +28-30 dB, Ceiling -6.5 dB
+4. Export → `output/master_iter<N>.wav`
+
+**After export**:
 ```bash
-flaas verify-audio output/master_iter1.wav
+flaas verify-audio output/master_iter<N>.wav
 ```
 
-**Expected**: Confirm gain delta (+0.250) is reflected in LUFS/peak measurements
+**Goal**: Close 3.09 LU gap (-13.59 → -10.50 LUFS) while maintaining peak ≤ -6.00
 
 ---
 
@@ -84,24 +91,32 @@ FLAAS (Python CLI + modules + tests)
 
 1. **Master track_id = -1000** (returns negative, regular 0..N)
 2. `/live/track/get/devices/name` returns `(track_id, name0, name1, ...)` - **drop index 0**
-3. **Applied state**: Master Utility gain = **-0.750 linear** (delta +0.250 applied, NOT reset)
-4. **Export blocker**: Third-party plugins (Valhalla, StudioVerse) hang render
+3. **Master fader is post-device chain** - Must be 0.0 dB for predictable peak control
+4. **Limiter alone insufficient** - Need compression before limiter for loudness
+5. **Export settings**: Rendered Track = Master, Normalize = OFF
 
 ---
 
-## NEXT STEPS (CORRECTED PRIORITY)
+## NEXT STEPS (UPDATED PRIORITY)
 
-### 1. Fix Export (IMMEDIATE)
-- Disable plugins in Ableton
-- Test 4-8 bar export
-- Validate gain adjustment via `verify-audio`
+### 1. Close LUFS Gap (IMMEDIATE) ✅ IN PROGRESS
+- Tune compression (GR 15-18 dB, Makeup 15-18 dB)
+- Adjust limiter (Gain 28-30 dB, Ceiling -6.5 dB)
+- Export + verify → Iterate until targets hit
+- **Status**: Manual workflow functional, 3.09 LU gap remaining
 
-### 2. Populate Endpoint Registry (AFTER EXPORT WORKS)
+### 2. Automate Master Processing (AFTER LUFS TARGET HIT)
+- Add Glue Compressor OSC control (threshold, makeup, ratio)
+- Add master fader OSC control (get/set volume)
+- Implement auto-adjustment algorithm
+- Replace manual iteration with scripted loop
+
+### 3. Populate Endpoint Registry (PARALLEL TO AUTOMATION)
 - Fill `docs/ENDPOINT_REGISTRY.json` with top 50 endpoints
 - Include full specification per endpoint
 - Prioritize track/device/song controls
 
-### 3. Generate Commands (AFTER REGISTRY COMPLETE)
+### 4. Generate Commands (AFTER REGISTRY COMPLETE)
 - Use registry as source of truth
 - Generate Python modules + CLI parsers + tests
 - Batch validate via terminal
@@ -119,12 +134,16 @@ FLAAS (Python CLI + modules + tests)
 
 ---
 
-## SINGLE MOST IMPORTANT THING
+## SINGLE MOST IMPORTANT THING (UPDATED)
 
-**Fix the export crash.**
+**Close the LUFS gap (3.09 LU remaining).**
 
-Everything else (endpoint expansion, command generation, comprehensive coverage) depends on a working audio iteration loop.
+Manual iteration loop is functional. Next: Automate master processing to eliminate manual export bottleneck.
+
+**Then**: Scale to comprehensive control coverage (endpoint expansion, command generation).
 
 ---
 
-**Priority reset complete. Execute export fix first.**
+**Export loop unblocked** ✅ **Manual iteration functional** ✅ **Gap: 3.09 LU**
+
+**See**: `docs/reference/EXPORT_FINDINGS.md` for complete triage findings (16 experiments)
