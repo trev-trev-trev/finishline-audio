@@ -9,6 +9,7 @@ from flaas.plan import write_plan_gain_actions
 from flaas.apply import apply_actions_dry_run, apply_actions_osc
 from flaas.util import set_utility_gain_norm, set_utility_gain_linear
 from flaas.loop import run_loop
+from flaas.verify import verify_master_utility_gain
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -61,6 +62,12 @@ def main() -> None:
 
     lp = sub.add_parser("loop", help="analyze -> plan-gain -> apply (manual export/verify)")
     lp.add_argument("wav")
+
+    vf = sub.add_parser("verify", help="Read back master Utility gain normalized")
+    vf.add_argument("--track-id", type=int, default=0)
+    vf.add_argument("--device-id", type=int, default=0)
+    vf.add_argument("--host", default="127.0.0.1")
+    vf.add_argument("--port", type=int, default=11000)
 
     args = p.parse_args()
 
@@ -122,6 +129,11 @@ def main() -> None:
 
     if args.cmd == "loop":
         run_loop(args.wav)
+        return
+
+    if args.cmd == "verify":
+        v = verify_master_utility_gain(args.track_id, args.device_id, target=RpcTarget(host=args.host, port=args.port))
+        print(v)
         return
 
     p.print_help()
