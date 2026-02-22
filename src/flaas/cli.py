@@ -10,6 +10,7 @@ from flaas.apply import apply_actions_dry_run, apply_actions_osc
 from flaas.util import set_utility_gain_norm, set_utility_gain_linear
 from flaas.loop import run_loop
 from flaas.verify import verify_master_utility_gain
+from flaas.export_guide import print_export_guide
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -73,6 +74,8 @@ def main() -> None:
     rs = sub.add_parser("reset", help="Reset master Utility gain to center")
     rs.add_argument("--host", default="127.0.0.1")
     rs.add_argument("--port", type=int, default=11000)
+
+    eg = sub.add_parser("export-guide", help="Print Ableton export settings (manual MVP)")
 
     args = p.parse_args()
 
@@ -144,6 +147,10 @@ def main() -> None:
     if args.cmd == "reset":
         set_utility_gain_norm(0, 0, 0.5, target=RpcTarget(host=args.host, port=args.port))
         print("sent")
+        return
+
+    if args.cmd == "export-guide":
+        print_export_guide()
         return
 
     p.print_help()

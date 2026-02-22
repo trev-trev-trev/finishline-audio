@@ -1,0 +1,13 @@
+def print_export_guide() -> None:
+    print("ABLETON EXPORT GUIDE (MVP manual step)")
+    print("- Rendered Track: Master")
+    print("- Render Start: 1.1.1")
+    print("- Render Length: full song (all stems same length)")
+    print("- Sample Rate: 48000 Hz")
+    print("- Bit Depth: 24-bit")
+    print("- File Type: WAV")
+    print("- Dither: Off")
+    print("- Normalize: Off")
+    print("- Convert to Mono: Off")
+    print("- Create Analysis File: Off")
+    print("- Export to: repo/output/ (keep filename stable)")
