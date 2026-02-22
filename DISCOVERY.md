@@ -96,17 +96,25 @@ Application
 
 ## DISCOVERY METHODOLOGY
 
-### Phase 1: Enumerate All Endpoints
+### Phase 1: Enumerate All Endpoints (DONE)
 
 **Approach**: Read each AbletonOSC `.py` module, extract all registered OSC addresses
 
-**Execute**:
+**Executed**:
 ```bash
-# Extract all OSC address registrations from AbletonOSC
-grep -r "add_handler\|register" "/Users/trev/Music/Ableton/User Library/Remote Scripts/AbletonOSC/abletonosc/" | grep -E "\/live\/|\/flaas\/"
+grep -r '/live/' "/Users/trev/Music/Ableton/User Library/Remote Scripts/AbletonOSC/abletonosc/" | grep -oE '/live/[a-z_/]+' | sort -u > data/discovery/all_osc_endpoints.txt
 ```
 
-**Output**: Complete list of ~100-300 available OSC endpoints
+**Output**: 108 endpoint patterns discovered
+
+**CRITICAL GAP IDENTIFIED**: Patterns are not specifications. Need full endpoint registry with:
+- Exact address
+- Arg types, ranges, examples
+- Response shape and types
+- Safety classification (read-only, write-safe, revertable)
+- Critical quirks (indexing rules, selection requirements)
+
+**See**: `docs/ENDPOINT_REGISTRY.json` for proper specification structure
 
 ### Phase 2: Categorize by Control Type
 

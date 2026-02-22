@@ -1,0 +1,152 @@
+{
+  "version": "0.1.0",
+  "description": "Canonical OSC endpoint specification for FLAAS command generation",
+  "note": "This is the bridge between endpoint patterns and reliable codegen",
+  
+  "endpoints": {
+    "/live/track/get/volume": {
+      "category": "get",
+      "description": "Get track volume (fader level, not gain)",
+      "args": [
+        {
+          "name": "track_id",
+          "type": "int",
+          "range": "0..N (regular), -1..-N (returns), -1000 (master)",
+          "example": 0
+        }
+      ],
+      "response": {
+        "type": "tuple",
+        "shape": "(track_id, volume)",
+        "example": "(0, 0.85)"
+      },
+      "safety": {
+        "read_only": true,
+        "write_safe": null,
+        "revertable": null
+      },
+      "notes": "Master track uses track_id=-1000"
+    },
+    
+    "/live/track/set/volume": {
+      "category": "set",
+      "description": "Set track volume (fader level, 0.0-1.0)",
+      "args": [
+        {
+          "name": "track_id",
+          "type": "int",
+          "range": "0..N (regular), -1..-N (returns), -1000 (master)",
+          "example": 0
+        },
+        {
+          "name": "volume",
+          "type": "float",
+          "range": "0.0-1.0",
+          "example": 0.85
+        }
+      ],
+      "response": {
+        "type": "None",
+        "shape": "fire-and-forget",
+        "example": null
+      },
+      "safety": {
+        "read_only": false,
+        "write_safe": true,
+        "revertable": true
+      },
+      "notes": "Use get/volume to read current value before setting"
+    },
+    
+    "/live/device/get/parameters/value": {
+      "category": "get",
+      "description": "Get all parameter values for a device",
+      "args": [
+        {
+          "name": "track_id",
+          "type": "int",
+          "range": "0..N (regular), -1..-N (returns), -1000 (master)",
+          "example": -1000
+        },
+        {
+          "name": "device_id",
+          "type": "int",
+          "range": "0..N (device index on track)",
+          "example": 0
+        }
+      ],
+      "response": {
+        "type": "tuple",
+        "shape": "(track_id, device_id, val0, val1, val2, ...)",
+        "example": "(-1000, 0, 0.5, 0.0, 1.0)"
+      },
+      "safety": {
+        "read_only": true,
+        "write_safe": null,
+        "revertable": null
+      },
+      "notes": "Response length = 2 + num_parameters. Index params with response[2+param_id]"
+    },
+    
+    "/live/track/get/devices/name": {
+      "category": "get",
+      "description": "Get device names on a track",
+      "args": [
+        {
+          "name": "track_id",
+          "type": "int",
+          "range": "0..N (regular), -1..-N (returns), -1000 (master)",
+          "example": -1000
+        }
+      ],
+      "response": {
+        "type": "tuple",
+        "shape": "(track_id, name0, name1, name2, ...)",
+        "example": "(-1000, 'Utility', 'EQ Eight', 'Limiter')"
+      },
+      "safety": {
+        "read_only": true,
+        "write_safe": null,
+        "revertable": null
+      },
+      "notes": "CRITICAL: Drop first element (track_id) before indexing. device_id = names[1:].index('Utility')"
+    },
+    
+    "TEMPLATE": {
+      "category": "get|set|action|listen",
+      "description": "Human-readable description",
+      "args": [
+        {
+          "name": "arg_name",
+          "type": "int|float|str|bool",
+          "range": "valid range or enum values",
+          "example": "example value"
+        }
+      ],
+      "response": {
+        "type": "tuple|None|list",
+        "shape": "description of response structure",
+        "example": "example response"
+      },
+      "safety": {
+        "read_only": "bool|null",
+        "write_safe": "bool|null (can be called repeatedly without harm)",
+        "revertable": "bool|null (can be undone)"
+      },
+      "notes": "Critical quirks, indexing rules, selection requirements"
+    }
+  },
+  
+  "todo": {
+    "discovered_patterns": 108,
+    "fully_specified": 5,
+    "remaining": 103,
+    "priority": [
+      "Complete track get/set endpoints (volume, pan, mute, solo, arm, sends)",
+      "Complete device get/set endpoints",
+      "Complete song/transport endpoints",
+      "Complete clip endpoints",
+      "Complete scene endpoints"
+    ]
+  }
+}

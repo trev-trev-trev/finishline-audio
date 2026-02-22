@@ -5,17 +5,17 @@
 
 ---
 
-## CURRENT CHAPTER
+## CURRENT TASK
 
-**Systematic Control Discovery** - Mirror Ableton's entire control surface in Python
+**IMMEDIATE BLOCKER**: Export crash prevents closed-loop audio iteration
 
-**Previous chapter closed**: Documentation consolidation (commit 7e401ff)
+**Real bottleneck**: Can't scale to 500 commands until `plan-gain → apply → export → verify-audio` loop works
 
-**Discovered**: 108 OSC endpoint patterns available  
-**Target**: 300-500 commands, 95%+ Ableton coverage  
-**Approach**: Terminal-driven batches, validate each iteration
+**Next action**: In Ableton, disable ValhallaSpaceModulator + StudioVerse on track 41, attempt 4-8 bar export to `output/master_iter1.wav`
 
-**See**: `DISCOVERY.md`, `NEXT_CHAPTER.md` for complete roadmap
+**After export succeeds**: `flaas verify-audio output/master_iter1.wav`
+
+**Future work**: Systematic control discovery (see DISCOVERY.md, NEXT_CHAPTER.md)
 
 ---
 
