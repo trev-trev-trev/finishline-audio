@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from pythonosc.udp_client import SimpleUDPClient
 
-from flaas.osc_rpc import OscTarget
+from flaas.osc_rpc import OscTarget, request_once
 from flaas.param_map import get_param_range, linear_to_norm
 
 @dataclass(frozen=True)
@@ -12,7 +12,7 @@ class LoadedAction:
     track_role: str
     device: str
     param: str
-    delta_db: float  # currently used as "linear delta" for Utility Gain (-1..+1) until dB mapping exists
+    delta_db: float  # currently used as "linear delta" for Utility Gain (-1..+1)
 
 UTILITY_GAIN_PARAM_ID = 9
 
@@ -40,23 +40,24 @@ def apply_actions_osc(
     target: OscTarget = OscTarget(),
 ) -> None:
     """
-    MVP apply: supports MASTER Utility Gain by mapping delta into Utility Gain param on track 0 device 0.
-    Assumes:
-      - track 0 is PREMASTER/MASTER track role
-      - device 0 is Utility
+    MVP apply: supports MASTER Utility Gain as a RELATIVE delta.
+    Assumes track 0 device 0 is Utility.
     """
     client = SimpleUDPClient(target.host, target.port)
+    pr = get_param_range(0, 0, UTILITY_GAIN_PARAM_ID, target=target)
 
     for a in load_actions(actions_path):
         if a.track_role == "MASTER" and a.device == "Utility" and a.param == "Gain":
-            # interpret delta_db as "linear gain delta" for now.
-            # get current normalized value
-            # We can't reliably read current value without extra calls, so we set absolute based on desired delta from 0.0 baseline:
-            # For now: set to midpoint + delta mapped into [-1,1] range.
-            pr = get_param_range(0, 0, UTILITY_GAIN_PARAM_ID, target=target)
-            # delta_db will be treated as linear value in [-1,1] then mapped.
-            n = linear_to_norm(a.delta_db, pr)
-            client.send_message("/live/device/set/parameter/value", [0, 0, UTILITY_GAIN_PARAM_ID, float(n)])
-            print(f"APPLIED: track0 device0 Utility.Gain <= linear {a.delta_db:.2f} (norm {n:.3f})")
+            cur = request_once(target, "/live/device/get/parameter/value", [0,0,UTILITY_GAIN_PARAM_ID], timeout_sec=3.0)
+            cur_norm = float(cur[3])
+
+            # convert current norm -> current linear using range
+            cur_linear = pr.min + cur_norm * (pr.max - pr.min)
+
+            new_linear = cur_linear + float(a.delta_db)
+            new_norm = linear_to_norm(new_linear, pr)
+
+            client.send_message("/live/device/set/parameter/value", [0, 0, UTILITY_GAIN_PARAM_ID, float(new_norm)])
+            print(f"APPLIED: Utility.Gain {cur_linear:.3f} -> {new_linear:.3f} (norm {cur_norm:.3f}->{new_norm:.3f})")
         else:
             print(f"SKIP: unsupported action {a}")
