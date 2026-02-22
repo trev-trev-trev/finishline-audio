@@ -4,6 +4,7 @@ from flaas.scan import write_model_cache
 from flaas.analyze import write_analysis
 from flaas.check import write_check
 from flaas.plan import write_plan_gain_actions
+from flaas.apply import apply_actions_dry_run
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -29,6 +30,9 @@ def main() -> None:
     pg = sub.add_parser("plan-gain", help="Plan Utility gain action to hit LUFS target (writes actions.json)")
     pg.add_argument("wav")
     pg.add_argument("--out", default="data/actions/actions.json")
+
+    ap = sub.add_parser("apply", help="Apply actions (dry-run for now)")
+    ap.add_argument("--actions", default="data/actions/actions.json")
 
     args = p.parse_args()
 
@@ -59,6 +63,10 @@ def main() -> None:
     if args.cmd == "plan-gain":
         out = write_plan_gain_actions(args.wav, args.out)
         print(str(out))
+        return
+
+    if args.cmd == "apply":
+        apply_actions_dry_run(args.actions)
         return
 
     p.print_help()
