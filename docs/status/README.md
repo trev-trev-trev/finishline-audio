@@ -7,25 +7,91 @@
 ## What This Is
 
 The status checkpoint system captures:
-1. **Current state** - Where we are now (CURRENT.md)
+1. **Current state** - Where we are now (STATUS.md / CURRENT.md)
 2. **Validated wins** - What works and how we know (RECEIPTS/)
-3. **Next actions** - Exact command to run next (CURRENT.md Section 7)
+3. **Next actions** - Exact command to run next (STATUS.md Section G)
 4. **Roadmap** - Prioritized remaining work (ROADMAP.md)
 
 **Design principle**: Terminal-first, minimal bloat, reproducible.
 
 ---
 
+## Quick Start (New ChatGPT Thread)
+
+### Upload ONE file to new chat:
+📤 **[STATUS.md](STATUS.md)** (~200 lines, complete save-game)
+
+### Paste this message:
+📋 **[TEMPLATES/NEW_CHAT_MESSAGE.md](TEMPLATES/NEW_CHAT_MESSAGE.md)**
+
+Or run:
+```bash
+./scripts/print_new_chat_message.sh
+```
+
+### The chat will print:
+```
+Available commands:
+- run / run program
+- continue
+- save
+- back
+- forward
+
+Type a command.
+```
+
+### Type "run" and the assistant executes the next action automatically.
+
+---
+
+## File Roles
+
+### STATUS.md ⭐ (Upload this to new chat)
+- **Purpose**: Single-file save-game for ChatGPT thread bootstrap
+- **Size**: ≤250 lines
+- **Contains**:
+  - Contract (how assistant should operate)
+  - Environment (paths, ports, venv)
+  - Where we are (milestone, commit, fingerprint)
+  - Verified capabilities (command list)
+  - Current context (5-10 bullets)
+  - Console commands (run/continue/save/back/forward)
+  - RUN PROGRAM (exact next action + fallback probe)
+  - Error taxonomy (single-command probes)
+  - Quick reference links
+
+### CURRENT.md (Detailed version)
+- **Purpose**: Longer-form current status (for Cursor, not ChatGPT upload)
+- **Size**: ~260 lines
+- **Contains**: Same structure as STATUS.md but with more detail
+
+### NEW_CHAT_MESSAGE.md (Paste this into new chat)
+- **Purpose**: Instructions for ChatGPT on how to use STATUS.md
+- **Size**: ~50 lines
+- **Usage**: Copy-paste after uploading STATUS.md
+
+---
+
 ## How to Use
 
-### Starting a New Session
+### Starting a New Session (Cursor)
 
-1. Read **[CURRENT.md](CURRENT.md)** (≤200 lines, primary reference)
+1. Read **[CURRENT.md](CURRENT.md)** (≤260 lines, primary reference)
 2. Run environment checklist (Section 3)
 3. Check gate status (Section 4)
 4. Execute "next single action" (Section 7)
 5. If success: Create receipt → Update CURRENT.md → Commit
 6. If failure: Run probe (Section 8) → Diagnose → Fix → Update
+
+### Starting a New Session (ChatGPT)
+
+1. Upload **[STATUS.md](STATUS.md)** to new thread
+2. Paste **[TEMPLATES/NEW_CHAT_MESSAGE.md](TEMPLATES/NEW_CHAT_MESSAGE.md)** content
+3. Wait for Console Commands menu
+4. Type **"run"** to execute next action
+5. Paste terminal output when assistant asks
+6. Repeat
 
 ### After Completing a Task
 

@@ -24,7 +24,9 @@
 ## By Topic
 
 ### Status & Checkpoints
-- **[status/CURRENT.md](status/CURRENT.md)** ⭐⭐⭐ **Load this FIRST in new threads**
+- **[status/STATUS.md](status/STATUS.md)** ⭐⭐⭐ **ChatGPT save-game** (upload to new thread, ≤250 lines)
+- **[status/CURRENT.md](status/CURRENT.md)** ⭐⭐⭐ **Cursor checkpoint** (detailed current state, ≤260 lines)
+- **[status/TEMPLATES/NEW_CHAT_MESSAGE.md](status/TEMPLATES/NEW_CHAT_MESSAGE.md)** - Paste after uploading STATUS.md
 - **[status/ROADMAP.md](status/ROADMAP.md)** - Next 20 expansions
 - **[status/RECEIPTS/](status/RECEIPTS/)** - Validated step history
 - **[status/README.md](status/README.md)** - Checkpoint system usage

@@ -8,7 +8,22 @@
 
 **START HERE** for new conversation threads:
 
-- **[status/CURRENT.md](status/CURRENT.md)** ⭐⭐⭐ **Load this FIRST** (≤200 lines, where-we-are-now)
+### For Cursor:
+- **[status/CURRENT.md](status/CURRENT.md)** ⭐⭐⭐ **Load this FIRST** (≤260 lines, detailed current state)
+
+### For ChatGPT (Fresh Thread Bootstrap):
+- **[status/STATUS.md](status/STATUS.md)** ⭐⭐⭐ **Upload this ONE file** (≤250 lines, save-game)
+- **[status/TEMPLATES/NEW_CHAT_MESSAGE.md](status/TEMPLATES/NEW_CHAT_MESSAGE.md)** - Paste this message after upload
+- Or run: `./scripts/print_new_chat_message.sh` to print template
+
+**How it works**:
+1. Upload STATUS.md to new ChatGPT thread
+2. Paste NEW_CHAT_MESSAGE.md content
+3. Chat prints menu: `run / continue / save / back / forward`
+4. Type "run" → assistant executes next action automatically
+5. Paste terminal output → assistant continues
+
+### General Status Files:
 - **[status/ROADMAP.md](status/ROADMAP.md)** - Next 20 expansions (prioritized)
 - **[status/RECEIPTS/](status/RECEIPTS/)** - Validated step history (terminal outputs)
 - **[status/README.md](status/README.md)** - How to use checkpoint system
