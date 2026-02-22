@@ -1,0 +1,3 @@
+# FLAAS version and compatibility
+FLAAS_VERSION = "2026-02-22.1"
+ABLETONOSC_VERSION_EXPECTED = "2026-02-22.1"

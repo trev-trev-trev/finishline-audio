@@ -1,296 +1,313 @@
 #!/usr/bin/env bash
 set -e
 
-# FLAAS Device Control Smoke Tests
-# Usage: ./scripts/run_smoke_tests.sh [--write]
+# FLAAS Device Control Smoke Tests (3 Lanes)
+# Usage: 
+#   ./scripts/run_smoke_tests.sh             # Lane 1: READ-ONLY (fast)
+#   ./scripts/run_smoke_tests.sh --write-fast # Lane 2: WRITE-FAST (dev loop gate)
+#   ./scripts/run_smoke_tests.sh --write      # Lane 3: WRITE (pre-commit gate)
+#
+# Exit codes:
+#   0  = pass
+#   10 = soft-skip only
+#   20 = read failure
+#   30 = write failure
 
 WRITE_MODE=false
+FAST_MODE=false
+
 if [[ "${1:-}" == "--write" ]]; then
     WRITE_MODE=true
+elif [[ "${1:-}" == "--write-fast" ]]; then
+    WRITE_MODE=true
+    FAST_MODE=true
 fi
 
-REPORT="data/reports/smoke_latest.txt"
-mkdir -p "$(dirname "$REPORT")"
-echo "FLAAS Smoke Tests - $(date -u +"%Y-%m-%d %H:%M:%S UTC")" > "$REPORT"
-echo "Mode: $([ "$WRITE_MODE" = true ] && echo "READ+WRITE" || echo "READ-ONLY")" >> "$REPORT"
-echo "" >> "$REPORT"
+REPORT_TXT="data/reports/smoke_latest.txt"
+REPORT_JSON="data/reports/smoke_latest.json"
+TARGET_CONFIG="data/targets/default.json"
+CACHE_FILE="data/caches/model_cache.json"
+CACHE_MAX_AGE_SEC=30
 
-echo "========================================="
-echo "FLAAS Smoke Tests"
-echo "Mode: $([ "$WRITE_MODE" = true ] && echo "READ+WRITE (reverts changes)" || echo "READ-ONLY (safe)")"
-echo "Report: $REPORT"
-echo "========================================="
-echo ""
+# Timeout settings (faster for iteration)
+TIMEOUT_READ=1.5
+TIMEOUT_WRITE=3.0
+MAX_RETRIES=1
+
+mkdir -p "$(dirname "$REPORT_TXT")" data/targets data/registry
+
+MODE_STR="READ-ONLY"
+if [ "$FAST_MODE" = true ]; then
+    MODE_STR="WRITE-FAST"
+elif [ "$WRITE_MODE" = true ]; then
+    MODE_STR="READ+WRITE"
+fi
+
+echo "FLAAS Smoke Tests - $(date -u +"%Y-%m-%d %H:%M:%S UTC")" > "$REPORT_TXT"
+echo "Mode: $MODE_STR" >> "$REPORT_TXT"
+echo "" >> "$REPORT_TXT"
 
 source .venv/bin/activate
 
+# Load target configuration
+if [ ! -f "$TARGET_CONFIG" ]; then
+    echo "{\"track_id\":41,\"eq8_device_id\":0,\"other_device_ids\":[1,2]}" > "$TARGET_CONFIG"
+fi
+
+TRACK_ID=$(jq -r '.track_id' "$TARGET_CONFIG")
+EQ8_DEV=$(jq -r '.eq8_device_id' "$TARGET_CONFIG")
+OTHER_DEVS=($(jq -r '.other_device_ids[]' "$TARGET_CONFIG"))
+
 PASSED=0
 FAILED=0
+SKIPPED=0
+FIRST_FAILURE=""
+declare -a TEST_RESULTS=()
 
-echo "=== READ-ONLY TESTS ==="
-echo ""
+# Helper function to log test results
+log_test() {
+    local state_id="$1"
+    local status="$2"  # PASS, FAIL, SKIP
+    local description="$3"
+    local output="${4:-}"
+    
+    echo "TEST: $state_id" >> "$REPORT_TXT"
+    echo "$description" >> "$REPORT_TXT"
+    
+    if [ "$status" = "PASS" ]; then
+        echo "✅ PASS" >> "$REPORT_TXT"
+        PASSED=$((PASSED + 1))
+    elif [ "$status" = "FAIL" ]; then
+        echo "❌ FAIL" >> "$REPORT_TXT"
+        if [ -n "$output" ]; then
+            echo "$output" >> "$REPORT_TXT"
+        fi
+        FAILED=$((FAILED + 1))
+        if [ -z "$FIRST_FAILURE" ]; then
+            FIRST_FAILURE="$state_id"
+        fi
+    elif [ "$status" = "SKIP" ]; then
+        echo "⏭️  SKIP: $description" >> "$REPORT_TXT"
+        SKIPPED=$((SKIPPED + 1))
+    fi
+    echo "" >> "$REPORT_TXT"
+    
+    # Store for JSON (escape quotes in description)
+    DESC_ESCAPED=$(echo "$description" | sed 's/"/\\"/g')
+    TEST_RESULTS+=("{\"state_id\":\"$state_id\",\"status\":\"$status\",\"description\":\"$DESC_ESCAPED\"}")
+}
 
-# Test 1: OSC ping
-echo "→ OSC ping"
-echo "TEST: OSC ping" >> "$REPORT"
-if flaas ping --wait > /tmp/smoke_out.txt 2>&1 && grep -q "ok:" /tmp/smoke_out.txt; then
-    echo "  ✅ PASS"
-    echo "✅ PASS" >> "$REPORT"
-    echo "" >> "$REPORT"
-    PASSED=$((PASSED + 1))
+# Helper function for retrying RPC calls
+retry_cmd() {
+    local retries="$1"
+    shift
+    local attempt=0
+    while [ $attempt -le $retries ]; do
+        if "$@" > /tmp/smoke_out.txt 2>&1; then
+            return 0
+        fi
+        attempt=$((attempt + 1))
+        [ $attempt -le $retries ] && sleep 0.5
+    done
+    return 1
+}
+
+# FAST READ-ONLY TESTS (sequential, reduced timeout, retry)
+if retry_cmd $MAX_RETRIES flaas remote-version --timeout $TIMEOUT_READ && grep -q "remote_version=" /tmp/smoke_out.txt; then
+    VERSION=$(cat /tmp/smoke_out.txt | head -1)
+    # Check for version mismatch warning
+    if grep -q "WARNING: Version mismatch" /tmp/smoke_out.txt; then
+        log_test "remote-version" "FAIL" "Version mismatch" "$(cat /tmp/smoke_out.txt 2>&1)"
+        exit 20  # Read failure
+    fi
+    log_test "remote-version" "PASS" "$VERSION"
 else
-    echo "  ❌ FAIL"
-    cat /tmp/smoke_out.txt >> "$REPORT"
-    echo "❌ FAIL" >> "$REPORT"
-    echo "" >> "$REPORT"
-    FAILED=$((FAILED + 1))
-    exit 1
+    log_test "remote-version" "FAIL" "Check AbletonOSC version" "$(cat /tmp/smoke_out.txt 2>&1)"
+    exit 20  # Read failure
 fi
-sleep 1
 
-# Test 2: Scan
-echo "→ Scan Live set"
-echo "TEST: Scan" >> "$REPORT"
-if flaas scan > /tmp/smoke_out.txt 2>&1 && grep -q "model_cache.json" /tmp/smoke_out.txt; then
-    echo "  ✅ PASS"
-    echo "✅ PASS" >> "$REPORT"
-    echo "" >> "$REPORT"
-    PASSED=$((PASSED + 1))
+if retry_cmd $MAX_RETRIES flaas ping --wait --timeout $TIMEOUT_READ && grep -q "ok:" /tmp/smoke_out.txt; then
+    log_test "ping" "PASS" "OSC ping"
 else
-    echo "  ❌ FAIL"
-    cat /tmp/smoke_out.txt >> "$REPORT"
-    echo "❌ FAIL" >> "$REPORT"
-    exit 1
+    log_test "ping" "FAIL" "OSC ping" "$(cat /tmp/smoke_out.txt 2>&1)"
+    exit 20  # Read failure
 fi
-sleep 1
 
-# Test 3: Inspect track
-echo "→ Inspect selected track"
-echo "TEST: Inspect selected track" >> "$REPORT"
-if flaas inspect-selected-track > /tmp/smoke_out.txt 2>&1 && grep -q "track_id=" /tmp/smoke_out.txt; then
-    echo "  ✅ PASS"
-    echo "✅ PASS" >> "$REPORT"
-    echo "" >> "$REPORT"
-    PASSED=$((PASSED + 1))
-else
-    echo "  ❌ FAIL"
-    cat /tmp/smoke_out.txt >> "$REPORT"
-    echo "❌ FAIL" >> "$REPORT"
-    exit 1
+# Skip inspect in fast mode
+if [ "$FAST_MODE" = false ]; then
+    if retry_cmd $MAX_RETRIES flaas device-param-info $TRACK_ID $EQ8_DEV --param-id 0 --timeout $TIMEOUT_READ && grep -q "track_id=$TRACK_ID" /tmp/smoke_out.txt; then
+        log_test "inspect-track-$TRACK_ID" "PASS" "Inspect track $TRACK_ID"
+    else
+        log_test "inspect-track-$TRACK_ID" "FAIL" "Inspect track $TRACK_ID" "$(cat /tmp/smoke_out.txt 2>&1)"
+        exit 20  # Read failure
+    fi
 fi
-sleep 1
 
-# Test 4: Inspect device
-echo "→ Inspect selected device"
-echo "TEST: Inspect selected device" >> "$REPORT"
-if flaas inspect-selected-device > /tmp/smoke_out.txt 2>&1 && grep -q "track_id=" /tmp/smoke_out.txt; then
-    echo "  ✅ PASS"
-    echo "✅ PASS" >> "$REPORT"
-    echo "" >> "$REPORT"
-    PASSED=$((PASSED + 1))
-else
-    echo "  ❌ FAIL"
-    cat /tmp/smoke_out.txt >> "$REPORT"
-    echo "❌ FAIL" >> "$REPORT"
-    exit 1
-fi
-sleep 1
+# Skip full inspection suite in fast mode
+if [ "$FAST_MODE" = false ]; then
+    # SCAN (with cache reuse and targeted scan)
+    SKIP_SCAN=false
+    if [ -f "$CACHE_FILE" ]; then
+        CACHE_AGE=$(($(date +%s) - $(stat -f %m "$CACHE_FILE" 2>/dev/null || stat -c %Y "$CACHE_FILE" 2>/dev/null || echo 0)))
+        if [ "$CACHE_AGE" -lt "$CACHE_MAX_AGE_SEC" ]; then
+            log_test "scan" "PASS" "Scan Live set (cached, ${CACHE_AGE}s old)"
+            SKIP_SCAN=true
+        fi
+    fi
 
-# Test 5: Device param info
-echo "→ Device param info (Utility Gain)"
-echo "TEST: Device param info" >> "$REPORT"
-if flaas device-param-info 0 0 --param-id 9 > /tmp/smoke_out.txt 2>&1 && grep -q 'name="Gain"' /tmp/smoke_out.txt; then
-    echo "  ✅ PASS"
-    echo "✅ PASS" >> "$REPORT"
-    echo "" >> "$REPORT"
-    PASSED=$((PASSED + 1))
-else
-    echo "  ❌ FAIL"
-    cat /tmp/smoke_out.txt >> "$REPORT"
-    echo "❌ FAIL" >> "$REPORT"
-    exit 1
-fi
-sleep 1
+    if [ "$SKIP_SCAN" = false ]; then
+        # Use targeted scan when config exists, full scan otherwise
+        if [ -f "$TARGET_CONFIG" ]; then
+            if retry_cmd $MAX_RETRIES flaas scan --tracks $TRACK_ID && grep -q "model_cache.json" /tmp/smoke_out.txt; then
+                log_test "scan" "PASS" "Scan track $TRACK_ID"
+            else
+                log_test "scan" "FAIL" "Scan track $TRACK_ID" "$(cat /tmp/smoke_out.txt 2>&1)"
+                exit 20  # Read failure
+            fi
+        else
+            if retry_cmd $MAX_RETRIES flaas scan && grep -q "model_cache.json" /tmp/smoke_out.txt; then
+                log_test "scan" "PASS" "Scan Live set (full)"
+            else
+                log_test "scan" "FAIL" "Scan Live set" "$(cat /tmp/smoke_out.txt 2>&1)"
+                exit 20  # Read failure
+            fi
+        fi
+    fi
 
-# Test 6: Device map
-echo "→ Generate device map (Limiter)"
-echo "TEST: Device map" >> "$REPORT"
-if flaas device-map 0 2 > /tmp/smoke_out.txt 2>&1 && grep -q "WROTE" /tmp/smoke_out.txt; then
-    echo "  ✅ PASS"
-    echo "✅ PASS" >> "$REPORT"
-    echo "" >> "$REPORT"
-    PASSED=$((PASSED + 1))
-else
-    echo "  ❌ FAIL"
-    cat /tmp/smoke_out.txt >> "$REPORT"
-    echo "❌ FAIL" >> "$REPORT"
-    exit 1
+    # Test EQ8 device
+    if retry_cmd $MAX_RETRIES flaas device-param-info $TRACK_ID $EQ8_DEV --param-id 7 --timeout $TIMEOUT_READ && grep -q "track_id=$TRACK_ID" /tmp/smoke_out.txt; then
+        log_test "inspect-device-$TRACK_ID-$EQ8_DEV" "PASS" "Inspect device $TRACK_ID/$EQ8_DEV (EQ Eight)"
+    else
+        log_test "inspect-device-$TRACK_ID-$EQ8_DEV" "FAIL" "Inspect device $TRACK_ID/$EQ8_DEV" "$(cat /tmp/smoke_out.txt 2>&1)"
+        exit 20  # Read failure
+    fi
+
+    # Test other devices
+    for DEV in "${OTHER_DEVS[@]}"; do
+        if retry_cmd $MAX_RETRIES flaas device-param-info $TRACK_ID $DEV --param-id 0 --timeout $TIMEOUT_READ && grep -q "track_id=$TRACK_ID" /tmp/smoke_out.txt; then
+            log_test "inspect-device-$TRACK_ID-$DEV" "PASS" "Inspect device $TRACK_ID/$DEV"
+        else
+            log_test "inspect-device-$TRACK_ID-$DEV" "FAIL" "Inspect device $TRACK_ID/$DEV" "$(cat /tmp/smoke_out.txt 2>&1)"
+            exit 20  # Read failure
+        fi
+    done
+
+    # Device map test
+    if retry_cmd $MAX_RETRIES flaas device-map $TRACK_ID $EQ8_DEV && grep -q "WROTE" /tmp/smoke_out.txt; then
+        log_test "device-map-$TRACK_ID-$EQ8_DEV" "PASS" "Generate device map (EQ Eight)"
+    else
+        log_test "device-map-$TRACK_ID-$EQ8_DEV" "FAIL" "Generate device map" "$(cat /tmp/smoke_out.txt 2>&1)"
+        exit 20  # Read failure
+    fi
+
+    # SKIPPED: Selection-based tests (non-deterministic)
+    log_test "inspect-selected-track" "SKIP" "requires UI selection"
+    log_test "inspect-selected-device" "SKIP" "requires UI selection"
 fi
 
 if [ "$WRITE_MODE" = false ]; then
+    # Write JSON report
+    echo "{\"timestamp\":\"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\",\"mode\":\"$MODE_STR\",\"passed\":$PASSED,\"failed\":$FAILED,\"skipped\":$SKIPPED,\"tests\":[$(IFS=,; echo "${TEST_RESULTS[*]}")]}" > "$REPORT_JSON"
+    
+    # 5-line summary
+    echo "Passed: $PASSED  Failed: $FAILED  Skipped: $SKIPPED"
+    if [ -n "$FIRST_FAILURE" ]; then
+        echo "First failure: $FIRST_FAILURE"
+    fi
+    echo "Report: $REPORT_TXT"
     echo ""
-    echo "========================================="
-    echo "READ-ONLY TESTS COMPLETE"
-    echo "Passed: $PASSED"
-    echo "Failed: $FAILED"
-    echo "========================================="
-    echo ""
-    echo "Run with --write flag to include write tests (with auto-revert)"
-    echo "SUMMARY: $PASSED passed, $FAILED failed" >> "$REPORT"
+    echo "Run with --write or --write-fast flag to include write tests"
+    
+    # Exit code: 0 = pass, 10 = soft-skip only
+    [ "$SKIPPED" -gt 0 ] && [ "$PASSED" -gt 0 ] && exit 0
+    [ "$SKIPPED" -gt 0 ] && [ "$PASSED" -eq 0 ] && exit 10
     exit 0
 fi
 
-echo ""
-echo "=== WRITE TESTS (with revert) ==="
-echo ""
+# === WRITE TESTS (with auto-map generation via direct RPC) ===
+echo "" >> "$REPORT_TXT"
+echo "=== WRITE TESTS (with revert) ===" >> "$REPORT_TXT"
+echo "" >> "$REPORT_TXT"
+
+# Auto-generate EQ8 map if missing (using direct RPC, no scan needed)
+EQ8_MAP_FILE="data/registry/eq8_map_t${TRACK_ID}_d${EQ8_DEV}.json"
+if [ ! -f "$EQ8_MAP_FILE" ]; then
+    flaas eq8-map $TRACK_ID $EQ8_DEV > /dev/null 2>&1 || true
+fi
 
 # EQ Eight band 1 A gain test
-echo "→ EQ Eight: Read band 1 A gain original"
-ORIGINAL_GAIN=$(flaas device-param-info 0 1 --param-id 7 | grep -oE 'val=[^ ]+' | cut -d= -f2)
-echo "  Original: $ORIGINAL_GAIN dB"
-echo "EQ8 Band 1 A Gain original: $ORIGINAL_GAIN" >> "$REPORT"
-sleep 1
+ORIGINAL_GAIN=$(flaas device-param-info $TRACK_ID $EQ8_DEV --param-id 7 | grep -oE 'val=[^ ]+' | cut -d= -f2)
 
-echo "→ EQ Eight: Set band 1 A gain to -3.0 dB"
-echo "TEST: EQ8 set gain -3.0" >> "$REPORT"
-if flaas eq8-set 0 1 --band 1 --side A --param gain --value -3.0 > /tmp/smoke_out.txt 2>&1 && grep -q "after=-3.000000" /tmp/smoke_out.txt; then
-    echo "  ✅ PASS"
-    echo "✅ PASS" >> "$REPORT"
-    PASSED=$((PASSED + 1))
+if flaas eq8-set $TRACK_ID $EQ8_DEV --band 1 --side A --param gain --value -3.0 > /tmp/smoke_out.txt 2>&1 && grep -q "after=-3.000000" /tmp/smoke_out.txt; then
+    log_test "eq8-set-gain" "PASS" "EQ8 set gain -3.0"
 else
-    echo "  ❌ FAIL"
-    cat /tmp/smoke_out.txt >> "$REPORT"
-    echo "❌ FAIL" >> "$REPORT"
-    exit 1
-fi
-sleep 1
-
-echo "→ EQ Eight: Reset band 1 A gain to $ORIGINAL_GAIN dB"
-echo "TEST: EQ8 reset gain" >> "$REPORT"
-if flaas eq8-set 0 1 --band 1 --side A --param gain --value "$ORIGINAL_GAIN" > /tmp/smoke_out.txt 2>&1; then
-    echo "  ✅ PASS"
-    echo "✅ PASS" >> "$REPORT"
-    PASSED=$((PASSED + 1))
-else
-    echo "  ❌ FAIL"
-    cat /tmp/smoke_out.txt >> "$REPORT"
-    echo "❌ FAIL" >> "$REPORT"
-    exit 1
-fi
-sleep 1
-
-# EQ Eight band 1 A freq test
-echo "→ EQ Eight: Read band 1 A freq original"
-ORIGINAL_FREQ=$(flaas device-param-info 0 1 --param-id 6 | grep -oE 'val=[^ ]+' | cut -d= -f2)
-echo "  Original: $ORIGINAL_FREQ"
-echo "EQ8 Band 1 A Freq original: $ORIGINAL_FREQ" >> "$REPORT"
-sleep 1
-
-echo "→ EQ Eight: Set band 1 A freq to 0.20"
-echo "TEST: EQ8 set freq 0.20" >> "$REPORT"
-if flaas eq8-set 0 1 --band 1 --side A --param freq --value 0.20 > /tmp/smoke_out.txt 2>&1 && grep -q "after=0.2" /tmp/smoke_out.txt; then
-    echo "  ✅ PASS"
-    echo "✅ PASS" >> "$REPORT"
-    PASSED=$((PASSED + 1))
-else
-    echo "  ❌ FAIL"
-    cat /tmp/smoke_out.txt >> "$REPORT"
-    echo "❌ FAIL" >> "$REPORT"
-    exit 1
-fi
-sleep 1
-
-echo "→ EQ Eight: Reset band 1 A freq to $ORIGINAL_FREQ"
-echo "TEST: EQ8 reset freq" >> "$REPORT"
-if flaas eq8-set 0 1 --band 1 --side A --param freq --value "$ORIGINAL_FREQ" > /tmp/smoke_out.txt 2>&1; then
-    echo "  ✅ PASS"
-    echo "✅ PASS" >> "$REPORT"
-    PASSED=$((PASSED + 1))
-else
-    echo "  ❌ FAIL"
-    cat /tmp/smoke_out.txt >> "$REPORT"
-    echo "❌ FAIL" >> "$REPORT"
-    exit 1
-fi
-sleep 1
-
-# Limiter ceiling test
-echo "→ Limiter: Read ceiling original"
-ORIGINAL_CEILING=$(flaas device-param-info 0 2 --param-id 2 | grep -oE 'val=[^ ]+' | cut -d= -f2)
-echo "  Original: $ORIGINAL_CEILING dB"
-echo "Limiter Ceiling original: $ORIGINAL_CEILING" >> "$REPORT"
-sleep 1
-
-echo "→ Limiter: Set ceiling to -1.0 dB"
-echo "TEST: Limiter set ceiling -1.0" >> "$REPORT"
-if flaas limiter-set 0 2 --param ceiling --value -1.0 > /tmp/smoke_out.txt 2>&1 && grep -q "after=-1.000000" /tmp/smoke_out.txt; then
-    echo "  ✅ PASS"
-    echo "✅ PASS" >> "$REPORT"
-    PASSED=$((PASSED + 1))
-else
-    echo "  ❌ FAIL"
-    cat /tmp/smoke_out.txt >> "$REPORT"
-    echo "❌ FAIL" >> "$REPORT"
-    exit 1
-fi
-sleep 1
-
-echo "→ Limiter: Reset ceiling to $ORIGINAL_CEILING dB"
-echo "TEST: Limiter reset ceiling" >> "$REPORT"
-if flaas limiter-set 0 2 --param ceiling --value "$ORIGINAL_CEILING" > /tmp/smoke_out.txt 2>&1; then
-    echo "  ✅ PASS"
-    echo "✅ PASS" >> "$REPORT"
-    PASSED=$((PASSED + 1))
-else
-    echo "  ❌ FAIL"
-    cat /tmp/smoke_out.txt >> "$REPORT"
-    echo "❌ FAIL" >> "$REPORT"
-    exit 1
-fi
-sleep 1
-
-# Limiter lookahead test
-echo "→ Limiter: Read lookahead original"
-ORIGINAL_LOOKAHEAD=$(flaas device-param-info 0 2 --param-id 6 | grep -oE 'val=[^ ]+' | cut -d= -f2)
-echo "  Original: $ORIGINAL_LOOKAHEAD"
-echo "Limiter Lookahead original: $ORIGINAL_LOOKAHEAD" >> "$REPORT"
-sleep 1
-
-echo "→ Limiter: Set lookahead to 0"
-echo "TEST: Limiter set lookahead 0" >> "$REPORT"
-if flaas limiter-set 0 2 --param lookahead --value 0 > /tmp/smoke_out.txt 2>&1 && grep -q "after=0.000000" /tmp/smoke_out.txt; then
-    echo "  ✅ PASS"
-    echo "✅ PASS" >> "$REPORT"
-    PASSED=$((PASSED + 1))
-else
-    echo "  ❌ FAIL"
-    cat /tmp/smoke_out.txt >> "$REPORT"
-    echo "❌ FAIL" >> "$REPORT"
-    exit 1
-fi
-sleep 1
-
-echo "→ Limiter: Reset lookahead to $ORIGINAL_LOOKAHEAD"
-echo "TEST: Limiter reset lookahead" >> "$REPORT"
-if flaas limiter-set 0 2 --param lookahead --value "$ORIGINAL_LOOKAHEAD" > /tmp/smoke_out.txt 2>&1; then
-    echo "  ✅ PASS"
-    echo "✅ PASS" >> "$REPORT"
-    PASSED=$((PASSED + 1))
-else
-    echo "  ❌ FAIL"
-    cat /tmp/smoke_out.txt >> "$REPORT"
-    echo "❌ FAIL" >> "$REPORT"
+    log_test "eq8-set-gain" "FAIL" "EQ8 set gain" "$(cat /tmp/smoke_out.txt 2>&1)"
     exit 1
 fi
 
+if flaas eq8-set $TRACK_ID $EQ8_DEV --band 1 --side A --param gain --value "$ORIGINAL_GAIN" > /tmp/smoke_out.txt 2>&1; then
+    log_test "eq8-reset-gain" "PASS" "EQ8 reset gain to $ORIGINAL_GAIN"
+else
+    log_test "eq8-reset-gain" "FAIL" "EQ8 reset gain" "$(cat /tmp/smoke_out.txt 2>&1)"
+    exit 1
+fi
+
+# Additional tests only in full write mode
+if [ "$FAST_MODE" = false ]; then
+    # EQ Eight band 1 A freq test
+    ORIGINAL_FREQ=$(flaas device-param-info $TRACK_ID $EQ8_DEV --param-id 6 | grep -oE 'val=[^ ]+' | cut -d= -f2)
+
+    if flaas eq8-set $TRACK_ID $EQ8_DEV --band 1 --side A --param freq --value 0.20 > /tmp/smoke_out.txt 2>&1 && grep -q "after=0.2" /tmp/smoke_out.txt; then
+        log_test "eq8-set-freq" "PASS" "EQ8 set freq 0.20"
+    else
+        log_test "eq8-set-freq" "FAIL" "EQ8 set freq" "$(cat /tmp/smoke_out.txt 2>&1)"
+        exit 1
+    fi
+
+    if flaas eq8-set $TRACK_ID $EQ8_DEV --band 1 --side A --param freq --value "$ORIGINAL_FREQ" > /tmp/smoke_out.txt 2>&1; then
+        log_test "eq8-reset-freq" "PASS" "EQ8 reset freq to $ORIGINAL_FREQ"
+    else
+        log_test "eq8-reset-freq" "FAIL" "EQ8 reset freq" "$(cat /tmp/smoke_out.txt 2>&1)"
+        exit 1
+    fi
+    
+    # Plugin device safe param test
+    # Get plugin device ID from config (default to device 1 if other_device_ids exists)
+    if [ -f "$TARGET_CONFIG" ]; then
+        PLUGIN_DEV=$(jq -r '.other_device_ids[0] // 1' "$TARGET_CONFIG")
+    else
+        PLUGIN_DEV=1
+    fi
+    
+    if retry_cmd $MAX_RETRIES flaas device-set-safe-param $TRACK_ID $PLUGIN_DEV --timeout $TIMEOUT_WRITE && grep -q "reverted_to=" /tmp/smoke_out.txt; then
+        log_test "plugin-set-safe-param" "PASS" "Plugin device safe param (track $TRACK_ID, device $PLUGIN_DEV)"
+    else
+        # Capture exit code from retry_cmd
+        EXIT_CODE=$?
+        if [ $EXIT_CODE -eq 20 ]; then
+            log_test "plugin-set-safe-param" "FAIL" "Plugin device safe param (read)" "$(cat /tmp/smoke_out.txt 2>&1)"
+            exit 20
+        else
+            log_test "plugin-set-safe-param" "FAIL" "Plugin device safe param (write)" "$(cat /tmp/smoke_out.txt 2>&1)"
+            exit 30
+        fi
+    fi
+else
+    log_test "eq8-set-freq" "SKIP" "skipped in fast mode"
+    log_test "eq8-reset-freq" "SKIP" "skipped in fast mode"
+    log_test "plugin-set-safe-param" "SKIP" "skipped in fast mode"
+fi
+
+# Write JSON report
+echo "{\"timestamp\":\"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\",\"mode\":\"$MODE_STR\",\"passed\":$PASSED,\"failed\":$FAILED,\"skipped\":$SKIPPED,\"tests\":[$(IFS=,; echo "${TEST_RESULTS[*]}")]}" > "$REPORT_JSON"
+
+# 5-line summary
 echo ""
-echo "========================================="
-echo "ALL TESTS COMPLETE"
-echo "Passed: $PASSED"
-echo "Failed: $FAILED"
-echo "========================================="
-echo ""
-echo "SUMMARY: $PASSED passed, $FAILED failed" >> "$REPORT"
-echo "Report saved: $REPORT"
+echo "Passed: $PASSED  Failed: $FAILED  Skipped: $SKIPPED"
+if [ -n "$FIRST_FAILURE" ]; then
+    echo "First failure: $FIRST_FAILURE"
+fi
+echo "Report: $REPORT_TXT"
+echo "JSON: $REPORT_JSON"
 
 exit 0

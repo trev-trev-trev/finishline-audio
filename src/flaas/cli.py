@@ -1,5 +1,7 @@
 import argparse
+import sys
 
+from flaas.version import FLAAS_VERSION, ABLETONOSC_VERSION_EXPECTED
 from flaas.osc import OscTarget as FireAndForgetTarget, send_ping
 from flaas.osc_rpc import OscTarget as RpcTarget, request_once
 from flaas.scan import write_model_cache
@@ -22,12 +24,13 @@ from flaas.eq8_set import eq8_set
 from flaas.eq8_reset_gains import eq8_reset_gains
 from flaas.device_map import generate_device_map
 from flaas.limiter_set import limiter_set
+from flaas.device_set_safe_param import device_set_safe_param
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
     sub = p.add_subparsers(dest="cmd")
 
-    p.add_argument("--version", action="store_true")
+    p.add_argument("--version", action="store_true", help=f"Show version ({FLAAS_VERSION})")
 
     ping = sub.add_parser("ping", help="Ping AbletonOSC via /live/test")
     ping.add_argument("--host", default="127.0.0.1")
@@ -37,8 +40,11 @@ def main() -> None:
     ping.add_argument("--timeout", type=float, default=2.0)
     ping.add_argument("--arg", default="ok", help="Argument sent to /live/test (default: ok)")
 
-    scan = sub.add_parser("scan", help="Write model_cache.json (stub for now)")
+    scan = sub.add_parser("scan", help="Scan Live set and write model cache")
     scan.add_argument("--out", default="data/caches/model_cache.json")
+    scan.add_argument("--tracks", type=int, nargs='+', help="Scan only specific track IDs (e.g., --tracks 41)")
+    scan.add_argument("--devices", action="store_true", help="Include device information (default: true)")
+
 
     analyze = sub.add_parser("analyze", help="Analyze a WAV and write analysis.json")
     analyze.add_argument("wav")
@@ -87,6 +93,11 @@ def main() -> None:
     rs.add_argument("--port", type=int, default=11000)
 
     eg = sub.add_parser("export-guide", help="Print Ableton export settings (manual MVP)")
+    
+    rv = sub.add_parser("remote-version", help="Get AbletonOSC remote script version")
+    rv.add_argument("--host", default="127.0.0.1")
+    rv.add_argument("--port", type=int, default=11000)
+    rv.add_argument("--timeout", type=float, default=2.0)
 
     va = sub.add_parser("verify-audio", help="Analyze+check a WAV and print PASS/FAIL")
     va.add_argument("wav")
@@ -174,10 +185,18 @@ def main() -> None:
     lim.add_argument("--host", default="127.0.0.1")
     lim.add_argument("--port", type=int, default=11000)
 
+    dsp = sub.add_parser("device-set-safe-param", help="Set safe parameter on plugin device, verify, and revert (smoke test)")
+    dsp.add_argument("track_id", type=int, help="Track index")
+    dsp.add_argument("device_id", type=int, help="Device index")
+    dsp.add_argument("--timeout", type=float, default=5.0)
+    dsp.add_argument("--host", default="127.0.0.1")
+    dsp.add_argument("--port", type=int, default=11000)
+
     args = p.parse_args()
 
     if args.version:
-        print("0.0.2")
+        print(f"flaas {FLAAS_VERSION}")
+        print(f"Expected AbletonOSC version: {ABLETONOSC_VERSION_EXPECTED}")
         return
 
     if args.cmd == "ping":
@@ -196,7 +215,8 @@ def main() -> None:
         return
 
     if args.cmd == "scan":
-        path = write_model_cache(args.out)
+        track_ids = args.tracks if hasattr(args, 'tracks') and args.tracks else None
+        path = write_model_cache(args.out, track_ids=track_ids)
         print(str(path))
         return
 
@@ -249,6 +269,33 @@ def main() -> None:
     if args.cmd == "export-guide":
         print_export_guide()
         return
+    
+    if args.cmd == "remote-version":
+        target = RpcTarget(host=args.host, port=args.port)
+        version = None
+        # Try /live namespace first, then fallback
+        for addr in ("/live/flaas/version", "/flaas/version"):
+            try:
+                version = request_once(target, addr, [], timeout_sec=args.timeout)
+                break
+            except TimeoutError:
+                continue
+        
+        if version is None:
+            print("ERROR: Could not get remote version (tried /live/flaas/version and /flaas/version)", file=sys.stderr)
+            raise SystemExit(1)
+        
+        remote_ver = version[0]
+        print(f"remote_version={remote_ver}")
+        
+        # Check version match
+        if remote_ver != ABLETONOSC_VERSION_EXPECTED:
+            print(f"WARNING: Version mismatch!", file=sys.stderr)
+            print(f"  Remote: {remote_ver}", file=sys.stderr)
+            print(f"  Expected: {ABLETONOSC_VERSION_EXPECTED}", file=sys.stderr)
+            raise SystemExit(1)
+        
+        return
 
     if args.cmd == "verify-audio":
         raise SystemExit(verify_audio(args.wav))
@@ -295,6 +342,16 @@ def main() -> None:
         data = json.load(open(path))
         print(f"WROTE {path} (class={data['device_class_name']} params={len(data['params'])})")
         return
+
+    if args.cmd == "device-set-safe-param":
+        target = RpcTarget(host=args.host, port=args.port)
+        exit_code = device_set_safe_param(
+            args.track_id,
+            args.device_id,
+            target,
+            timeout_sec=args.timeout,
+        )
+        raise SystemExit(exit_code)
 
     if args.cmd == "limiter-set":
         limiter_set(track_id=args.track_id, device_id=args.device_id, param=args.param, value=args.value, target=RpcTarget(host=args.host, port=args.port), timeout_sec=args.timeout, dry=args.dry)
