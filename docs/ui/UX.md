@@ -778,5 +778,18 @@ tags: [discovery, osc, device, surface-expansion]
 
 ---
 
+---
+
+## Downstream Docs
+
+**Implementation plan**: [UX_IMPLEMENTATION.md](UX_IMPLEMENTATION.md)  
+- Technical step-by-step engineering plan for UI v0
+- 30 numbered tasks (first 10 are MVP-critical)
+- Tech stack decision, parsing strategy, acceptance tests
+
+**Read UX_IMPLEMENTATION.md when**: User requests UI work or after MVP gates complete.
+
+---
+
 **Last updated**: 2026-02-22  
 **Next update trigger**: After MVP completion, or after 10+ receipts created, or when UI implementation requested.

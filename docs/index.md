@@ -95,6 +95,7 @@
 
 ### UI (Future Work)
 - [UX.md](ui/UX.md) ⭐ **Read-only Status Dashboard spec** (planning doc)
+- [UX_IMPLEMENTATION.md](ui/UX_IMPLEMENTATION.md) ⭐ **Implementation plan** (20 numbered tasks)
 - [ui-spec-running.md](ui/ui-spec-running.md) - General UI exploration (placeholder)
 
 ### Archive (Historical)

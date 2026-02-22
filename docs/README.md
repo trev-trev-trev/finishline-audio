@@ -71,6 +71,10 @@ flaas scan
 - **Implementation**: `architecture/IMPLEMENTATION_SPEC.md`
 - **What's left**: `project/mvp_remaining.md`
 
+### For UI Planning (Future Work)
+- **Status Dashboard**: `ui/UX.md` ⭐ **Read-only frontend design** (philosophy + views)
+- **Implementation plan**: `ui/UX_IMPLEMENTATION.md` ⭐ **20 numbered tasks** (tech stack + build plan)
+
 ## Key Principles
 
 **Terminal-driven development**: Every change validated by command-line output.
