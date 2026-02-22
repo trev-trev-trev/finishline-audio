@@ -22,3 +22,6 @@ data/timelines/*.json
 
 # Logs
 *.log
+
+# Build artifacts
+*.egg-info/
