@@ -1,6 +1,8 @@
-# Human Actions Required: Master Candidates Generation
+# Human Actions Required: Consensus Master Generation
 
-**Goal**: Generate 3 Spotify-ready master candidates from your 8-bar loop
+**Goal**: Generate ONE high-quality, LOUD master from your 8-bar loop
+
+**Target**: LUFS -8.0 (maximum competitive loudness, NOT quiet)
 
 **Status**: All code implemented ✅ Ready to run
 
@@ -183,27 +185,67 @@ cat output/master_candidates.jsonl | jq .
 - [ ] Master fader = 0.0 dB
 - [ ] Master device chain: Utility → EQ → Glue Compressor → Limiter (all ON)
 
-**Run command** (ONE high-quality master):
+**Run command** (ONE LOUD master):
 ```bash
 cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate && flaas master-consensus
 ```
 
 **What it does**:
-- Generates ONE thoroughly optimized master (not 3 variants)
-- Target: **LUFS -9.0** (competitive streaming loudness, NOT quiet)
-- Up to 10 iterations with adaptive parameter adjustments
-- Aggressive starting params: Strong compression + high limiter gain
-- Auto-adjusts threshold, makeup, and limiter gain to converge
-- Stops when within 0.3 LU of target with safe peak
+- Generates ONE thoroughly optimized master (MAXIMUM loudness)
+- Target: **LUFS -8.0** (commercial ceiling, as loud as it gets)
+- Up to 15 iterations with very aggressive adjustments
+- Starting params: HEAVY compression (GR 18-20 dB) + MAXIMUM limiter gain (40 dB)
+- Pushes loudness as hard as possible while maintaining peak safety
+- Stops when within 0.5 LU of target with safe peak
 
 **After completion**:
 ```bash
 ls -lh output/master_consensus.wav
-cat output/master_consensus.jsonl
+cat output/master_consensus.jsonl | jq .
 ```
 
-**Listen**: `output/master_consensus.wav` should be full, loud, smooth (NOT quiet!)
+**Listen**: `output/master_consensus.wav` should be LOUD, full, competitive (NOT quiet!)
+
+**If still too quiet**: See "Manual Loudness Boost" section below
 
 ---
 
-**Next step**: Run the command and paste terminal output when complete.
+---
+
+## MANUAL LOUDNESS BOOST (If Still Too Quiet)
+
+If automated output is still too quiet, do this in Ableton:
+
+### Option 1: Master Fader Boost (Simplest)
+
+**In Ableton**:
+1. Set Master track fader to **+3 to +6 dB** (boost post-chain)
+2. Export manually: File → Export → `output/master_manual_boost.wav`
+3. Verify: `flaas verify-audio output/master_manual_boost.wav`
+
+**Trade-off**: May exceed peak limit (but adds loudness)
+
+### Option 2: Limiter Gain Boost (Safer)
+
+**In Ableton**:
+1. Open Limiter device on Master track
+2. Set Gain to **maximum** (check max value in device, likely 42+ dB)
+3. Export manually: File → Export → `output/master_limiter_max.wav`
+4. Verify: `flaas verify-audio output/master_limiter_max.wav`
+
+**Trade-off**: More limiting (may lose dynamics, but stays peak-safe)
+
+### Option 3: Additional Compression Stage (Best Quality)
+
+**In Ableton**:
+1. Add **second Glue Compressor** before Limiter
+2. Chain: `[Utility] → [EQ] → [Glue 1] → [Glue 2] → [Limiter]`
+3. Glue 2 settings: Threshold -20 dB, Makeup 10 dB, Ratio 3:1
+4. Export manually: File → Export → `output/master_double_comp.wav`
+5. Verify: `flaas verify-audio output/master_double_comp.wav`
+
+**Trade-off**: More complex, but cleanest loudness boost
+
+---
+
+**Next step**: Run `flaas master-consensus` first, listen, then manual boost if needed.
