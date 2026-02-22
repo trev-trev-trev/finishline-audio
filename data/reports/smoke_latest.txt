@@ -1,0 +1,42 @@
+FLAAS Smoke Tests - 2026-02-22 12:42:05 UTC
+Mode: READ+WRITE
+
+TEST: OSC ping
+✅ PASS
+
+TEST: Scan
+✅ PASS
+
+TEST: Inspect selected track
+✅ PASS
+
+TEST: Inspect selected device
+✅ PASS
+
+TEST: Device param info
+✅ PASS
+
+TEST: Device map
+✅ PASS
+
+EQ8 Band 1 A Gain original: 0.0
+TEST: EQ8 set gain -3.0
+✅ PASS
+TEST: EQ8 reset gain
+✅ PASS
+EQ8 Band 1 A Freq original: 0.14274713397026062
+TEST: EQ8 set freq 0.20
+✅ PASS
+TEST: EQ8 reset freq
+✅ PASS
+Limiter Ceiling original: -0.30000001192092896
+TEST: Limiter set ceiling -1.0
+✅ PASS
+TEST: Limiter reset ceiling
+✅ PASS
+Limiter Lookahead original: 1.0
+TEST: Limiter set lookahead 0
+✅ PASS
+TEST: Limiter reset lookahead
+✅ PASS
+SUMMARY: 14 passed, 0 failed
