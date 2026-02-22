@@ -41,14 +41,19 @@ def auto_export_wav(out_path: str | Path, timeout_s: int = 600) -> None:
     # CRITICAL: Resolve to absolute path immediately
     out_path = Path(out_path).expanduser().resolve()
     out_dir = out_path.parent
-    out_filename = out_path.name
+    
+    # Remove .wav extension (Ableton adds it automatically)
+    # If we type "_probe.wav", Ableton creates "_probe.wav.wav"
+    out_filename_base = out_path.stem  # Without extension
+    out_filename_full = out_path.name  # With extension (for wait loop)
     
     debug = os.environ.get("FLAAS_UI_EXPORT_DEBUG") == "1"
     
     if debug:
         print(f"[DEBUG] Auto-export target: {out_path}")
         print(f"[DEBUG] Directory: {out_dir}")
-        print(f"[DEBUG] Filename: {out_filename}")
+        print(f"[DEBUG] Filename (base, no ext): {out_filename_base}")
+        print(f"[DEBUG] Filename (full): {out_filename_full}")
     
     # Delete existing file (avoids overwrite prompt)
     if out_path.exists():
@@ -140,10 +145,10 @@ on run
             keystroke return
             delay 0.5
             
-            log "Step 7: Clear filename field and type new name"
+            log "Step 7: Clear filename field and type new name (WITHOUT extension)"
             keystroke "a" using {{command down}}
             delay 0.2
-            keystroke "{out_filename}"
+            keystroke "{out_filename_base}"
             delay 0.3
             
             log "Step 8: Click Save button"
@@ -244,7 +249,7 @@ end run
     # Use mdfind to search for the filename (may have been saved elsewhere)
     try:
         mdfind_result = subprocess.run(
-            ["mdfind", f"kMDItemFSName == '{out_filename}'"],
+            ["mdfind", f"kMDItemFSName == '{out_filename_full}'"],
             capture_output=True,
             text=True,
             timeout=5,
