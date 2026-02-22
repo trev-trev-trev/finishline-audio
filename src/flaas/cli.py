@@ -1,5 +1,7 @@
 import argparse
-from flaas.osc import OscTarget, send_ping
+
+from flaas.osc import OscTarget as FireAndForgetTarget, send_ping
+from flaas.osc_rpc import OscTarget as RpcTarget, request_once
 from flaas.scan import write_model_cache
 from flaas.analyze import write_analysis
 from flaas.check import write_check
@@ -12,9 +14,12 @@ def main() -> None:
 
     p.add_argument("--version", action="store_true")
 
-    ping = sub.add_parser("ping", help="Send /live/test ping to AbletonOSC")
+    ping = sub.add_parser("ping", help="Ping AbletonOSC via /live/test")
     ping.add_argument("--host", default="127.0.0.1")
     ping.add_argument("--port", type=int, default=11000)
+    ping.add_argument("--wait", action="store_true", help="Wait for /live/test reply on 11001")
+    ping.add_argument("--listen-port", type=int, default=11001)
+    ping.add_argument("--timeout", type=float, default=2.0)
 
     scan = sub.add_parser("scan", help="Write model_cache.json (stub for now)")
     scan.add_argument("--out", default="data/caches/model_cache.json")
@@ -41,8 +46,18 @@ def main() -> None:
         return
 
     if args.cmd == "ping":
-        send_ping(OscTarget(host=args.host, port=args.port))
-        print("sent")
+        if args.wait:
+            resp = request_once(
+                RpcTarget(host=args.host, port=args.port),
+                "/live/test",
+                1,
+                listen_port=args.listen_port,
+                timeout_sec=args.timeout,
+            )
+            print(f"ok: {resp}")
+        else:
+            send_ping(FireAndForgetTarget(host=args.host, port=args.port))
+            print("sent")
         return
 
     if args.cmd == "scan":
