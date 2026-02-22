@@ -11,12 +11,18 @@ source .venv/bin/activate
 ## Commands
 
 * `flaas --version`
-* `flaas ping` — fire-and-forget `/live/test` to AbletonOSC (default 127.0.0.1:11000)
-* `flaas scan` — writes `data/caches/model_cache.json` (stub for now)
+* `flaas ping` — `/live/test` to AbletonOSC (use `--wait` for reply)
+* `flaas scan` — writes `data/caches/model_cache.json` (tracks+devices)
 * `flaas analyze <wav>` — writes `data/reports/analysis.json` (peak dBFS + LUFS-I)
-* `flaas check <wav>` — writes `data/reports/check.json` (targets: LUFS -10.5 ±0.5, peak <= -6 dBFS)
-* `flaas plan-gain <wav>` — writes `data/actions/actions.json` (Utility gain delta, clamped ±6 dB)
-* `flaas apply` — prints actions (dry-run)
+* `flaas check <wav>` — writes `data/reports/check.json`
+* `flaas plan-gain <wav>` — writes `data/actions/actions.json` (Utility gain *linear delta*, clamped)
+* `flaas apply` — applies actions via OSC (fingerprint enforced)
+* `flaas verify` — reads back Utility gain (normalized)
+* `flaas reset` — sets Utility gain to center
+* `flaas util-gain-linear <track> <device> <val>` — set Utility gain in exposed linear range (ex: -1..+1)
+* `flaas util-gain-norm <track> <device> <val>` — set Utility gain normalized 0..1
+* `flaas loop <wav>` — analyze → plan → apply
+* `flaas loop <wav> --dry` — preview only
 
 ## Repo layout
 
