@@ -1,13 +1,12 @@
-# Human Actions Required: Consensus Master Generation
+# Human Actions Required: Final Master Generation
 
 **Goal**: Generate ONE high-quality, LOUD master from your 8-bar loop
 
-**Modes Available**:
-- `loud_preview` (default): -9 LUFS, -2 dBTP (competitive commercial, addresses "super quiet")
-- `streaming_safe`: -14 LUFS, -1 dBTP (official Spotify spec, quieter)
-- `headroom`: -10 LUFS, -6 dBFS (internal safety)
+**User feedback**: "Sounds incredible, just needs to be LOUDER"
 
-**Status**: All code implemented ✅ Ready to run
+**Solution**: `--mode loud_preview` (-9 LUFS, commercial competitive loudness)
+
+**Status**: All code implemented ✅ Ready for final run
 
 ---
 
@@ -182,30 +181,35 @@ cat output/master_candidates.jsonl | jq .
 - [ ] macOS Automation permission (Terminal → System Events)
 - [ ] Ableton export defaults (Rendered Track = Master, Normalize = OFF, folder = output/)
 
-**Before each run**:
+**Before final run**:
 - [ ] Ableton Live running with project open
-- [ ] Loop/selection set to 8-bar section
-- [ ] Master fader = 0.0 dB (CRITICAL - post-chain, defeats limiter if boosted)
-- [ ] Master device chain: Utility → EQ → Glue Compressor → **Saturator** → Limiter (all ON)
-  - **Saturator optional but recommended** (add for maximum loudness)
+- [ ] Loop/selection set to 8-bar section (or full song if ready)
+- [ ] Master fader = 0.0 dB (CRITICAL - verify visually)
+- [ ] Master device chain: Utility → EQ → Glue Compressor → **Saturator** → Limiter (all ON, not bypassed)
+  - **Saturator HIGHLY RECOMMENDED** (add if missing - efficient RMS boost)
+  - If no Saturator: Command will warn but continue (will be slightly quieter)
 
-**DEFAULT (conservative, recommended first run)**:
+**FINAL RUN (maximum loudness without overdoing it)**:
 ```bash
-cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate && flaas master-consensus
+cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate && flaas master-consensus --mode loud_preview
 ```
-- Default mode: `streaming_safe` (-14 LUFS, -1 dBTP)
-- Official Spotify recommendation
-- Good baseline, avoids overcooking
 
-**IF "super quiet" (use loud_preview mode)**:
+**Why loud_preview**:
+- Target: **LUFS -9.0, True Peak -2 dBTP**
+- **This is the loudest you should go** for Spotify/streaming
+- Commercial pop/EDM releases target -9 to -8 LUFS
+- Matches perceived loudness of professional releases
+- Spotify will normalize DOWN to -14, but initial perception is "LOUD"
+
+**Alternative (if you want to hear conservative baseline first)**:
 ```bash
-flaas master-consensus --mode loud_preview
+flaas master-consensus --mode streaming_safe  # -14 LUFS (official Spotify target, quieter)
 ```
-- Target: **LUFS -9.0, True Peak -2 dBTP** (competitive commercial)
-- **Genre note**: Commercial releases vary (-8 to -12 LUFS depending on style)
-- Pop/EDM: typically -8 to -9 LUFS
-- Indie/acoustic: typically -10 to -14 LUFS
-- **Use your ears** and watch for artifacts (distortion, pumping)
+
+**NOT RECOMMENDED (unless you have specific reason)**:
+```bash
+flaas master-consensus --mode headroom  # -10 LUFS (internal safety, moderate)
+```
 
 **What it does**:
 - Generates ONE thoroughly optimized master
@@ -218,59 +222,70 @@ flaas master-consensus --mode loud_preview
 
 **After completion**:
 ```bash
-# If you ran default (streaming_safe):
-ls -lh output/master_streaming_safe.wav
-cat output/master_streaming_safe.jsonl | jq .
-
-# If you ran loud_preview:
 ls -lh output/master_loud_preview.wav
 cat output/master_loud_preview.jsonl | jq .
 ```
 
-**Other modes**:
-```bash
-flaas master-consensus --mode headroom  # -10 LUFS (moderate, internal safety)
-```
+**Listen**: `output/master_loud_preview.wav`
+
+**Expected**: LOUD, full, smooth (competitive with commercial releases)
+
+**If good**: Ship it, move to next track
+
+**If needs more**: See "IF STILL TOO QUIET" section below
 
 ---
 
 ---
 
-## IF STILL TOO QUIET (Add Saturator First)
+## IF STILL TOO QUIET (After loud_preview)
 
-**Best solution**: Add Saturator to device chain (most efficient RMS boost)
+**If loud_preview (-9 LUFS) is still too quiet**:
 
-### Add Saturator (Recommended)
+1. **Check playback**:
+   - System volume at 80%+?
+   - Headphones/speakers working correctly?
+   - Compare to commercial reference track (play at same volume)
 
-**In Ableton**:
-1. **Add Saturator** device to Master track
-2. **Position**: AFTER Glue Compressor, BEFORE Limiter
-3. **Chain order**: `[Utility] → [EQ] → [Glue Compressor] → [Saturator] → [Limiter]`
-4. **Settings**:
-   - Soft Clip = ON
-   - Drive = 3-8 dB (start at 5 dB)
-   - Dry/Wet = 100%
-5. Run `flaas master-consensus --mode loud_preview` again
+2. **Verify Saturator is in chain**:
+   - If missing: Add Saturator between Glue and Limiter
+   - Re-run `flaas master-consensus --mode loud_preview`
 
-**Why Saturator**: Raises average level (RMS) more efficiently than extreme compression, smoother sound
-
-### If STILL too quiet after Saturator
-
-**Option 1: Use streaming_safe mode for reference**:
-```bash
-flaas master-consensus --mode streaming_safe  # -14 LUFS (quieter but official)
-```
-If this is also too quiet, issue is likely playback volume, not master
-
-**Option 2: Check playback volume**:
-- System volume control
-- Headphone/speaker amp gain
-- Compare to commercial reference track at same volume
+3. **Push to -8 LUFS** (RISKY, but possible):
+   - This is the absolute ceiling (distortion risk)
+   - Manually set in Ableton:
+     - Glue Threshold: -40 dB
+     - Glue Makeup: 25 dB
+     - Saturator Drive: 8 dB
+     - Limiter Gain: 38 dB
+   - Export manually, verify, listen for artifacts
 
 **DO NOT**:
-- ❌ Boost Master fader (it's post-chain, defeats limiter, breaks peak safety)
-- ❌ Push limiter gain to max (diminishing returns, causes distortion)
+- ❌ Boost Master fader (defeats limiter, breaks peak safety)
+- ❌ Go above -8 LUFS (guaranteed distortion)
 
 ---
 
-**Next step**: Run `flaas master-consensus --mode loud_preview` and listen.
+## Premium Plugins (Future Enhancement)
+
+**You have**: Waves (Renaissance, limiters), Output (Arcade, Rhythm, Bass)
+
+**Recommendation**: Get loudness right with stock plugins FIRST (it's working!)
+
+**When to swap**:
+- ✅ LUFS target hit (-9 LUFS achieved)
+- ✅ Peak safe (true peak ≤ -2 dBTP)
+- ❌ BUT: Sound is "thin", "harsh", "sterile" (quality issue, not loudness)
+
+**Potential swaps**:
+- Glue Compressor → **Renaissance Compressor** (analog warmth)
+- Saturator → **Kramer Master Tape** (vintage saturation)
+- Limiter → **Waves L2/L3** (more transparent at high gain)
+
+**See**: `docs/reference/PREMIUM_PLUGINS.md` for integration strategy
+
+**Bottom line**: Stock Ableton plugins are professional-grade. Waves adds character, not capability. Get LOUDNESS right first, THEN consider character enhancements.
+
+---
+
+**Next step**: Run `flaas master-consensus --mode loud_preview` and listen. If it's LOUD and sounds good, ship it.
