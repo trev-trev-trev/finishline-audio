@@ -269,7 +269,8 @@ def master_consensus(
             return 20
         
         # Export
-        temp_export = final_output.parent / f"{final_output.stem}_iter{iteration}{final_output.suffix}"
+        # CRITICAL: Use absolute resolved path, delete existing
+        temp_export = (final_output.parent / f"{final_output.stem}_iter{iteration}{final_output.suffix}").resolve()
         if temp_export.exists():
             temp_export.unlink()
         
@@ -277,7 +278,7 @@ def master_consensus(
         
         if auto_export_enabled and sys.platform == "darwin":
             try:
-                auto_export_wav(temp_export, timeout_s=180)
+                auto_export_wav(temp_export, timeout_s=600)
                 print(f"  ✓ Export complete")
             except RuntimeError as e:
                 print(f"  ✗ Export failed: {e}")

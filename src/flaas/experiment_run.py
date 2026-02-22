@@ -349,7 +349,11 @@ def experiment_run(
             print(f"    ✓ {key} set")
         
         # Export (auto or manual)
-        export_path = Path(export_file).absolute()
+        # CRITICAL: Resolve to absolute path, delete existing
+        export_path = Path(export_file).expanduser().resolve()
+        if export_path.exists():
+            export_path.unlink()
+        
         export_success = False
         export_error = None
         
