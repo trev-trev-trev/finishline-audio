@@ -26,6 +26,30 @@ flaas ping --wait  # Request/response (prints "ok: ('ok',)")
 **Expected**: `ok: ('ok',)` means AbletonOSC is alive.  
 **Failure**: `TimeoutError` means Ableton not running, AbletonOSC not loaded, or ports blocked.
 
+### Smoke Tests (End-to-End Validation)
+```bash
+./scripts/run_smoke_tests.sh           # Read-only: OSC + inspection (~25 sec)
+./scripts/run_smoke_tests.sh --write   # Read+write: full device control with auto-revert (~60 sec)
+```
+
+**Read-only tests** (default):
+- OSC ping/reply roundtrip
+- Live set scan (tracks + devices)
+- Inspect selected track
+- Inspect selected device  
+- Device parameter info
+- Device map generation
+
+**Write tests** (--write flag):
+- EQ Eight band gain: set to -3.0 dB, revert to original
+- EQ Eight band freq: set to 0.20, revert to original
+- Limiter ceiling: set to -1.0 dB, revert to original
+- Limiter lookahead: set to 0, revert to original
+
+**Report**: `data/reports/smoke_latest.txt` (pass/fail summary)  
+**Safety**: All write tests read original value first and revert after test  
+**Exit codes**: 0 = all pass, non-zero = first failure
+
 ### Live Set Structure
 ```bash
 flaas scan
