@@ -337,16 +337,23 @@ rg '/live/\w+' "/Users/trev/Music/Ableton/User Library/Remote Scripts/AbletonOSC
 
 ---
 
-## NEXT ACTIONS
+## NEXT ACTIONS (BLOCKED UNTIL EXPORT LOOP WORKS)
 
-1. **Extract all OSC endpoints** from AbletonOSC source
-2. **Categorize** by control type (get/set/action/observe)
-3. **Generate Python stubs** for top 100 endpoints
-4. **Wire CLI parsers** for top 100 commands
-5. **Generate smoke tests** for validation
-6. **Document** auto-generated reference
+**BLOCKER**: Export crash prevents closed-loop audio iteration (`plan-gain → apply → export → verify-audio`)
 
-**Expected output**: 500-1000 commands, systematically covering all Ableton controls
+**Must complete first**:
+1. Fix export crash in Ableton (disable third-party plugins)
+2. Validate gain adjustment via `flaas verify-audio output/master_iter1.wav`
+3. Confirm export loop is stable and repeatable
+
+**After export loop works**:
+1. Populate `docs/ENDPOINT_REGISTRY.json` (top 50 endpoints with full specs)
+2. Generate Python stubs from registry
+3. Wire CLI parsers
+4. Generate smoke tests
+5. Scale to 500-1000 commands
+
+**See**: `PRIORITY.md` for execution order correction
 
 ---
 

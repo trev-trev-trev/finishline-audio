@@ -286,20 +286,23 @@ make write-fast
 
 ## NEXT IMMEDIATE ACTION
 
-**Start Phase 2**: Generate track control commands
+**BLOCKED UNTIL EXPORT LOOP WORKS**
 
-```bash
-# Create generator script
-./scripts/create_command_generator.sh
+**Current blocker**: Export crash prevents closed-loop audio iteration
 
-# Generate first batch: track volume controls
-./scripts/generate_commands.sh track-volume
+**Must complete first**:
+1. In Ableton: Disable ValhallaSpaceModulator + StudioVerse on track 41
+2. Attempt 4-8 bar export to `output/master_iter1.wav`
+3. Run `flaas verify-audio output/master_iter1.wav`
+4. Confirm gain adjustment is reflected in measurements
 
-# Test
-make write-fast
+**After export loop works**:
+1. Populate `docs/ENDPOINT_REGISTRY.json` (top 50 endpoints)
+2. Generate track control commands from registry
+3. Test via `make write-fast`
+4. Iterate in batches
 
-# Iterate
-```
+**See**: `PRIORITY.md` for execution order correction
 
 ---
 
@@ -307,4 +310,4 @@ make write-fast
 **End state**: Complete Python mirror of Ableton Live  
 **Approach**: Terminal-driven, batch-validated, budget-conscious
 
-Let's build.
+**Status**: Waiting for export loop stability gate
