@@ -2,9 +2,12 @@
 
 **Comprehensive technical reference for Finish Line Audio Automation System**
 
-**Generated**: 2026-02-22  
+**Updated**: 2026-02-22 19:05 UTC  
 **Version**: 0.0.2  
+**Commit**: 0a64c50  
 **Repo**: https://github.com/trev-trev-trev/finishline-audio
+
+**CRITICAL**: See `STATE.md` for current operational state. This notebook is technical reference only.
 
 ---
 
@@ -122,12 +125,16 @@
 **Key dependencies**: `audio_io`, `numpy`, `pyloudnorm`  
 **Side effects**: Filesystem read (audio), filesystem write (JSON), CPU-intensive DSP
 
-#### `src/flaas/targets.py` (11 lines)
-**Purpose**: Compliance target definitions  
+#### `src/flaas/targets.py` (58 lines) **UPDATED 2026-02-22**
+**Purpose**: Compliance target definitions + master track utilities  
 **Key responsibilities**:
-- Define master_lufs (-10.5), true_peak_ceiling (-1.0), stem_peak_ceiling (-6.0)  
-**Key dependencies**: None  
-**Side effects**: None (pure data)
+- Define master_lufs (-10.5), true_peak_ceiling (-1.0), stem_peak_ceiling (-6.0)
+- Define MASTER_TRACK_ID = -1000
+- Provide resolve_utility_device_id() for dynamic Utility device resolution  
+**Key dependencies**: `osc_rpc`  
+**Side effects**: OSC queries (resolve_utility_device_id), SystemExit(20) on Utility not found
+
+**Critical addition**: Shared resolver eliminates code duplication across plan.py, apply.py, verify.py
 
 #### `src/flaas/check.py` (38 lines)
 **Purpose**: Compliance checking against targets  
@@ -185,12 +192,15 @@
 **Key dependencies**: `osc_rpc`, `param_map`, `scan`  
 **Side effects**: Network I/O (OSC queries + sets), stdout print
 
-#### `src/flaas/verify.py` (10 lines)
+#### `src/flaas/verify.py` (32 lines) **UPDATED 2026-02-22**
 **Purpose**: Parameter readback  
 **Key responsibilities**:
-- Read current Utility Gain normalized value  
-**Key dependencies**: `osc_rpc`  
-**Side effects**: Network I/O (OSC query)
+- Read current Utility Gain normalized value
+- Default to master track (-1000) with dynamic Utility device resolution  
+**Key dependencies**: `osc_rpc`, `targets` (MASTER_TRACK_ID, resolve_utility_device_id)  
+**Side effects**: Network I/O (OSC query), SystemExit(20) if Utility not found
+
+**Critical change**: track_id and device_id now optional (default None), auto-resolves to master
 
 #### `src/flaas/loop.py` (27 lines)
 **Purpose**: Orchestration loop (analyze → plan → apply)  
@@ -1126,11 +1136,17 @@ flaas inspect-selected-device  # Select device in Ableton first
 - **Purpose**: Get device count for track
 - **Wrapper**: `request_once(target, "/live/track/get/num_devices", [tid])`
 
-**`/live/track/get/devices/name`**
+**`/live/track/get/devices/name`** **CRITICAL QUIRK - UPDATED 2026-02-22**
 - **Request**: `[track_id]`
-- **Response**: `(track_id, name1, name2, ..., nameN)`
+- **Response**: `(track_id, name0, name1, name2, ...)`
 - **Purpose**: Get all device names for track
 - **Wrapper**: `request_once(target, "/live/track/get/devices/name", [tid])`
+- **CRITICAL**: Response includes track_id as FIRST element
+  - **WRONG**: `device_id = response.index("Utility")`
+  - **WRONG**: `names = response[2:]` (skips track_id AND first device)
+  - **RIGHT**: `names = list(response)[1:]` (skip only track_id)
+  - **RIGHT**: `device_id = names.index("Utility")` (now correctly 0 for first device)
+- **Used in**: `targets.resolve_utility_device_id()` - shared resolver for plan/apply/verify
 
 **`/live/track/get/devices/class_name`**
 - **Request**: `[track_id]`
@@ -2189,9 +2205,10 @@ MAX_UTILITY_NORM = 0.99  # Stop condition
 # Module: flaas/check.py (hardcoded)
 LUFS_TOLERANCE = 0.5  # ± LU
 
-# Assumed track/device IDs
-MASTER_TRACK_ID = 0
-UTILITY_DEVICE_ID = 0
+# Master track/device resolution (UPDATED 2026-02-22)
+MASTER_TRACK_ID = -1000  # NOT 0!
+# Utility device ID is DYNAMIC (query /live/track/get/devices/name)
+# Use resolve_utility_device_id() from targets.py
 ```
 
 ---
