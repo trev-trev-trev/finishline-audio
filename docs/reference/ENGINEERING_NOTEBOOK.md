@@ -2342,6 +2342,213 @@ This shows all files/lines where parameters are set via OSC.
 
 ---
 
+## Section 13: Export Loop Triage and Findings
+
+**Date**: 2026-02-22  
+**Sessions**: Post-version-check, export crash investigation  
+**Experiments**: 16 export iterations  
+**Status**: Export loop functional, manual iteration working
+
+### 13.1 Problem Context
+
+**Initial blocker**: Ableton export hang/crash during master track export
+
+**Loop required**: `plan-gain → apply → export → verify-audio → adjust → repeat`
+
+**Hypothesis**: Third-party plugins (ValhallaSpaceModulator, StudioVerse) causing render instability
+
+**Approach**: Systematic triage with sanity tests
+
+### 13.2 Critical Discoveries
+
+#### Discovery 1: Master Fader is Post-Device Chain
+
+**Finding**: Master fader processes AFTER all devices (Utility, EQ, Compressor, Limiter)
+
+**Impact**: Master fader > 0.0 dB defeats Limiter ceiling
+
+**Proof**:
+- Experiment #9: Limiter ceiling -6.0, actual peak -3.77 (fader boosted)
+- Experiment #10: Master fader 0.0, peak -9.77 (ceiling restored)
+- Experiment #4: Master fader mute → peak -138.47 (silent)
+
+**Rule**: **Master fader must be at 0.0 dB for predictable device chain behavior**
+
+**Signal flow**:
+```
+[Utility] → [EQ Eight] → [Glue Compressor] → [Limiter] → Master Fader → Output
+```
+
+#### Discovery 2: Limiter Alone Cannot Reach LUFS Target
+
+**Finding**: Peak-capped limiter restricts loudness gain
+
+**Experiments**:
+- Limiter gain +15: LUFS -14.33, peak -6.00
+- Limiter gain +19: LUFS -13.83, peak -6.00
+- **Diminishing returns**: More gain → more limiting → minimal LUFS rise
+
+**Physics**: Limiter reduces peaks (lowers RMS contribution from transients) to stay under ceiling
+
+**Conclusion**: Need compression/saturation BEFORE limiter to increase RMS
+
+#### Discovery 3: Compression + Limiter Strategy Works
+
+**Finding**: Glue Compressor before Limiter enables LUFS target
+
+**Device chain**: `[Utility] → [EQ Eight] → [Glue Compressor] → [Limiter]`
+
+**Roles**:
+- **Glue Compressor**: Reduce dynamic range (GR 10-18 dB), increase RMS, apply makeup gain
+- **Limiter**: Safety ceiling (prevent clipping), final gain boost
+
+**Results**:
+- Experiment #13: Glue + Limiter → LUFS -16.34, peak -6.00
+- Experiment #14: Makeup 0 + Limiter gain 24 → LUFS -13.59, peak -6.00 ✅
+- Experiment #16: Makeup 15 + Limiter gain 28 → LUFS -14.17, peak -6.50 ✅
+
+**Best result**: LUFS -13.59 (target -10.50, gap 3.09 LU)
+
+#### Discovery 4: Export Settings Validated
+
+**Finding**: Export path correct when properly configured
+
+**Validated settings**:
+- Rendered Track = Master (not "Selected Tracks Only")
+- Normalize = OFF (critical for peak control)
+- Selection/Loop only = works correctly
+- Export folder = `output/` (correct)
+
+**Proof**: Experiment #4 (master fader mute) confirmed Master device chain rendering
+
+### 13.3 Experiment Log (16 Exports)
+
+| # | File | LUFS | Peak | LUFS ✓ | Peak ✓ | Key Configuration |
+|--:|------|-----:|-----:|:------:|:------:|-------------------|
+| 1 | master_iter1.wav | -19.16 | -3.77 | ❌ | ❌ | Baseline (plugins bypassed) |
+| 2 | master_iter2.wav | -19.16 | -3.77 | ❌ | ❌ | Limiter not applied (wrong chain edited) |
+| 3 | sanity_ceiling_-20.wav | -19.16 | -3.77 | ❌ | ❌ | Wrong chain edited |
+| 4 | sanity_master_fader_mute.wav | -inf | -138.47 | ❌ | ✅ | **Confirms render path** |
+| 5 | master_iter3.wav | -10.98 | -0.00 | ✅ | ❌ | Post-limiter gain issue |
+| 6 | master_iter4.wav | -10.98 | -0.00 | ✅ | ❌ | Same |
+| 7 | master_iter5.wav | -10.98 | -0.00 | ✅ | ❌ | Same |
+| 8 | sanity_limiter_only.wav | -22.57 | -14.00 | ❌ | ✅ | Limiter isolated (Utility+EQ OFF) |
+| 9 | sanity_limiter_ceiling_-6.wav | -19.16 | -3.77 | ❌ | ❌ | Master fader defeated ceiling |
+| 10 | sanity_master_fader0_-6.wav | -25.16 | -9.77 | ❌ | ✅ | **Fader 0.0 = predictable** |
+| 11 | sanity_gain15.wav | -14.33 | -6.00 | ❌ | ✅ | Limiter ceiling clamps correctly |
+| 12 | sanity_gain19.wav | -13.83 | -6.00 | ❌ | ✅ | Diminishing returns |
+| 13 | sanity_glue.wav | -16.34 | -6.00 | ❌ | ✅ | Glue + Limiter |
+| 14 | sanity_glue_gain24.wav | -13.59 | -6.00 | ❌ | ✅ | **Best LUFS so far** |
+| 15 | sanity_glue_gr12_makeup10.wav | -15.00 | -6.00 | ❌ | ❌ | Borderline peak |
+| 16 | sanity_glue_makeup15_gain28.wav | -14.17 | -6.50 | ❌ | ✅ | Lower ceiling for safety |
+
+**Targets**: LUFS -10.50, Peak -6.00
+
+### 13.4 Validated Workflow (Manual)
+
+**Step 1: Configure Master chain** (in Ableton):
+```
+[Utility] → [EQ Eight] → [Glue Compressor] → [Limiter]
+Master fader: 0.0 dB (critical)
+```
+
+**Step 2: Glue Compressor settings**:
+- Threshold: Adjust for GR 10-18 dB (listen for natural compression)
+- Makeup: 10-15 dB (increase RMS)
+- Ratio: 3:1 to 10:1 (higher = more limiting)
+- Attack/Release: Default or adjust to taste
+
+**Step 3: Limiter settings**:
+- Ceiling: -6.0 to -6.5 dB (safety margin for peak)
+- Gain: 24-30 dB (loudness boost, constrained by ceiling)
+- Release: Default
+
+**Step 4: Export**:
+- File → Export Audio/Video
+- Rendered Track = Master
+- Normalize = OFF
+- Export folder: `output/`
+- File name: `master_iter<N>.wav`
+
+**Step 5: Verify**:
+```bash
+flaas verify-audio output/master_iter<N>.wav
+```
+
+**Step 6: Adjust** based on results:
+- Peak > -6.0: Reduce limiter gain OR lower ceiling
+- LUFS < -10.5: Increase compression (lower threshold, more makeup) OR increase limiter gain
+- Repeat
+
+### 13.5 Key Learnings
+
+1. **Master fader is post-device chain** - Must be at 0.0 dB for predictable peak control
+2. **Limiter alone is insufficient for loudness** - Need compression to increase RMS before limiter
+3. **Peak cap limits loudness gain** - Trade-off between LUFS and peak safety
+4. **Compression + limiter strategy validated** - Achieved -13.59 LUFS @ -6.00 peak
+5. **Export settings critical** - Rendered Track = Master, Normalize = OFF
+6. **Iterative approach required** - 3.09 LU gap remains, needs more compression
+7. **Ableton signal flow matters** - Device order and master fader position affect results
+
+### 13.6 Future Automation Potential
+
+**Current state**: Manual export + manual adjustment (functional)
+
+**Future state**: Python-controlled master processing
+
+**Required OSC endpoints** (for automation):
+- `/live/track/get/volume` (query master fader level)
+- `/live/track/set/volume` (set master fader to 0.0)
+- `/live/device/set/parameter/value` (Glue + Limiter params)
+- `/live/device/get/parameter/value` (read current settings)
+- `/live/song/export/*` (scripted export, if available)
+
+**Required Python modules** (for auto-adjustment):
+- `flaas glue-set-threshold <dB>` (set GR target)
+- `flaas glue-set-makeup <dB>` (set output boost)
+- `flaas limiter-set-gain <dB>` (set gain boost)
+- `flaas limiter-set-ceiling <dB>` (already exists in some form)
+- `flaas auto-master <wav>` (meta-command: auto-tune to targets)
+
+**Auto-adjustment algorithm** (sketch):
+```python
+def auto_master(wav_path: str, lufs_target: float, peak_limit: float):
+    for iteration in range(10):  # max 10 iterations
+        result = verify_audio(wav_path)
+        if result.lufs_pass and result.peak_pass:
+            return  # success
+        
+        if result.peak > peak_limit:
+            # Reduce limiter gain or lower ceiling
+            adjust_limiter(gain_delta=-1.0)
+        elif result.lufs < lufs_target:
+            # Increase compression or limiter gain
+            adjust_glue(threshold_delta=-1.0, makeup_delta=+1.0)
+            adjust_limiter(gain_delta=+1.0)
+        
+        export_master(f"master_iter{iteration}.wav")
+```
+
+**See**: `docs/ENDPOINT_REGISTRY.json` for endpoint specifications
+
+### 13.7 Session Metrics (Export Triage)
+
+**Total experiments**: 16 exports  
+**Manual iterations**: ~2 hours  
+**Files created**: 16 WAV files in `output/`  
+**Best result**: LUFS -13.59, Peak -6.00 (experiment #14)  
+**Gap remaining**: 3.09 LU to target  
+**Key insight**: Master fader post-device chain (critical finding)  
+**Unblocked**: Export loop now functional for manual iteration
+
+**Documentation artifacts**:
+- `docs/reference/EXPORT_FINDINGS.md` (complete findings)
+- Updated `STATE.md` (export loop unblocked)
+- Updated `QUICKSTART.md` (new workflow)
+- This section (Section 13)
+
+---
+
 **End of Engineering Notebook**
 
 For updates or additions, edit this file and commit.  
