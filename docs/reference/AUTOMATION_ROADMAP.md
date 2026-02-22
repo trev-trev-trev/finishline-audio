@@ -183,41 +183,37 @@ def auto_tune_master(input_wav: str, output_wav: str, max_iterations: int = 10):
 
 ---
 
-## Implementation Priority
+## Implementation Status
 
-### Immediate (Current Gap)
-1. Manual compression tuning (3.09 LU gap)
-2. Hit LUFS/peak targets
+### ✅ Phase 1.1-1.3 COMPLETE (This Session)
 
-### Next (Phase 1.1-1.2)
-1. Glue Compressor OSC control
-2. Master fader OSC control
-3. Smoke tests for new commands
+**Implemented**:
+1. ✅ Batch experiment runner (`flaas experiment-run`)
+2. ✅ Runtime device resolution (by name, case-insensitive)
+3. ✅ Runtime parameter resolution (by name, fuzzy match)
+4. ✅ Master fader OSC control (with manual fallback)
+5. ✅ Glue Compressor parameter setting (threshold, makeup, ratio)
+6. ✅ Limiter parameter setting (ceiling, gain, release)
+7. ✅ File stabilization check (wait for appearance + stable size)
+8. ✅ JSONL logging (`output/experiments.jsonl`)
+9. ✅ SHA256 audit trail
+10. ✅ Early exit on success
 
-### Then (Phase 1.3)
-1. Batch experiment runner
-2. Experiment logging (JSONL)
-3. Parameter sweep generator
+**Command**: `flaas experiment-run data/experiments/master_sweep.json`
 
-### Later (Phase 1.4)
+**Config**: 3 experiments included (iter7-9)
+
+**Ready to test**: Close 3.09 LU gap via parameter sweep
+
+### 🔄 Phase 1.4 (Next)
 1. Auto-adjustment algorithm
 2. Convergence testing
+3. Meta-command: `flaas auto-tune-master`
 
-### Future (Phase 2)
+### 🔮 Phase 2 (Future)
 1. Track solo/mute control
 2. Print/resample stem exporter
 3. Multi-track verification
-
----
-
-## Expected Timeline
-
-**Phase 1.1-1.2** (Glue + fader control): ~2-3 sessions  
-**Phase 1.3** (Batch runner): ~1-2 sessions  
-**Phase 1.4** (Auto-tune): ~1 session  
-**Phase 2** (Stems): ~3-5 sessions (complex)
-
-**Total to semi-automated Master workflow**: ~4-6 sessions
 
 ---
 
