@@ -9,6 +9,7 @@ def verify_audio(path: str | Path) -> int:
     print(f"FILE: {a.file}")
     print(f"LUFS: {a.lufs_i:.2f} (target {c.target_lufs:.2f})  pass={c.pass_lufs}")
     print(f"PEAK: {a.peak_dbfs:.2f} dBFS (limit {c.target_peak_dbfs:.2f}) pass={c.pass_peak}")
+    print(f"TRUE PEAK: {a.true_peak_dbtp:.2f} dBTP (streaming: -1 dBTP safe)")
     ok = c.pass_lufs and c.pass_peak
     print("PASS" if ok else "FAIL")
     return 0 if ok else 1

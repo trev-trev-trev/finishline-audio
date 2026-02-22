@@ -16,6 +16,7 @@ class AnalysisResult:
     samples: int
     duration_sec: float
     peak_dbfs: float
+    true_peak_dbtp: float
     lufs_i: float
     created_at_utc: str
 
@@ -25,10 +26,19 @@ def analyze_wav(path: str | Path) -> AnalysisResult:
     if mono.size == 0:
         raise ValueError("empty audio")
 
+    # Sample peak
     peak = float(np.max(np.abs(mono)))
     peak_dbfs = -float("inf") if peak == 0.0 else float(20.0 * np.log10(peak))
 
-    meter = pyln.Meter(sr)  # BS.1770
+    # True peak (4x oversampling approximation for dBTP)
+    # For true dBTP we'd need proper ITU-R BS.1770 true peak, but 4x oversample is close
+    from scipy import signal
+    oversampled = signal.resample(mono, len(mono) * 4)
+    true_peak = float(np.max(np.abs(oversampled)))
+    true_peak_dbtp = -float("inf") if true_peak == 0.0 else float(20.0 * np.log10(true_peak))
+
+    # LUFS-I (BS.1770)
+    meter = pyln.Meter(sr)
     lufs_i = float(meter.integrated_loudness(mono))
 
     dur = info.samples / info.sr
@@ -39,6 +49,7 @@ def analyze_wav(path: str | Path) -> AnalysisResult:
         samples=info.samples,
         duration_sec=float(dur),
         peak_dbfs=peak_dbfs,
+        true_peak_dbtp=true_peak_dbtp,
         lufs_i=lufs_i,
         created_at_utc=datetime.now(timezone.utc).isoformat(),
     )
