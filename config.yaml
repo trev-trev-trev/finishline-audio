@@ -1,6 +1,113 @@
+# Finish Line Audio Automation - Configuration
+# Policy Version: 0.1-mvp
+
 ableton:
   host: "127.0.0.1"
-  port_in: 11000
-  port_out: 11001
+  port_in: 11000      # AbletonOSC listens here
+  port_out: 11001     # AbletonOSC replies here
   timeout_s: 1.0
   retries: 2
+
+project:
+  sample_rate: 48000
+  stems_root: "./input"
+  output_root: "./output"
+  cache_root: "./data/caches"
+  reports_root: "./data/reports"
+  actions_root: "./data/actions"
+  timelines_root: "./data/timelines"
+  profiles_root: "./data/profiles"
+
+# Stem definition (locked for MVP)
+# Stems are: post-fader, post-insert-FX, pre-master-chain, group tracks only
+tracks:
+  roles:
+    VOCAL_LEAD: ["VOCAL_LEAD", "VOCAL", "LEAD_VOX"]
+    VOCAL_BG: ["VOCAL_BG", "BG_VOX", "BACKING"]
+    KICK: ["KICK"]
+    DRUMS: ["DRUMS", "DRUM_BUS"]
+    BASS: ["BASS"]
+    MUSIC: ["MUSIC", "INSTRUMENTS", "INST"]
+    FX: ["FX", "FILLS"]
+    REVERB_RETURN: ["REVERB_RETURN", "REVERB", "VERB"]
+  master_name_candidates: ["ALBUM_MASTER", "MASTER", "Master"]
+
+devices:
+  utility_name: "Utility"
+  eq8_name: "EQ Eight"
+  limiter_name_candidates: ["Limiter", "Limiter (Master)"]
+  compressor_name_candidates: ["Compressor", "Glue Compressor"]
+
+targets:
+  master_lufs_i: -10.5
+  master_true_peak_db: -1.0
+  stem_peak_db: -6.0
+  mono_below_hz: 120
+
+rules:
+  max_iterations: 2
+  max_eq_moves_per_track: 2
+  allow_boosts: false
+  confidence_min: 0.7  # only apply actions if detection confidence >= this
+  severity_min: 0.3    # only apply actions if severity >= this
+
+# Activity detection (silence masking with hysteresis)
+activity:
+  enter_threshold_db: -50.0  # RMS level to enter "active" state
+  exit_threshold_db: -55.0   # RMS level to exit "active" state
+  min_duration_sec: 0.2      # minimum duration to stay in state
+
+# Crest factor protection (prevents over-optimization)
+dynamics:
+  crest_factor_min: 6.0  # if below this, material is already compressed
+  # Actions when crest < min:
+  #   - disable compressor adjustments
+  #   - reduce burst detection sensitivity (multiply thresholds by 1.5x)
+
+# Detector thresholds
+thresholds:
+  rumble:
+    non_bass_cutoff_hz: 90
+    low_band_ratio_max: 0.12  # energy(20-90)/energy(90-2000)
+  mud:
+    band_hz: [250, 500]
+    ratio_max: 0.18
+  harsh:
+    band_hz: [2500, 5000]
+    burst_db_over_median: 6.0
+  sibilance:
+    band_hz: [5000, 8000]
+    burst_db_over_median: 7.0
+  stereo:
+    correlation_min: 0.0
+  reverb_tail:
+    tail_seconds_max: 2.5
+    tail_threshold_db: -35.0
+
+# Verification criteria (pass/fail for polish job)
+verification:
+  lufs_tolerance_db: 0.5      # ±0.5 dB from target
+  true_peak_tolerance_db: 0.1 # ±0.1 dB from target
+  stem_peak_tolerance_db: 0.2 # ±0.2 dB from target
+  severe_violations_allowed: 0 # must be zero to pass
+
+# Export policy (user responsibility, tracked in reports)
+export_policy:
+  assumed:
+    normalization: false
+    sample_rate: 48000
+    bit_depth: 24
+    dither: "none"
+  confirmed: false  # set to true when programmatic export implemented
+
+debug:
+  verbose_osc: false
+  verify_after_set: true
+  log_detections: true
+  throttle_ms: 25  # delay between OSC param sets
+
+analysis:
+  stft_window_size: 4096  # for 48kHz
+  stft_hop_size: 1024
+  oversample_factor: 4    # for true-peak estimate
+  true_peak_label: "true_peak_estimate_db"  # always label as estimate
