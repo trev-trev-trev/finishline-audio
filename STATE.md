@@ -7,28 +7,34 @@
 
 ## CURRENT TASK
 
-**IMMEDIATE BLOCKER**: Export crash prevents closed-loop audio iteration
+**Export loop FUNCTIONAL** - Manual iteration working ✅
 
-**Real bottleneck**: Can't scale to 500 commands until `plan-gain → apply → export → verify-audio` loop works
+**Latest result**: LUFS -13.59, Peak -6.00 (experiment #14: Glue + Limiter)
 
-**Next action**: In Ableton, disable ValhallaSpaceModulator + StudioVerse on track 41, attempt 4-8 bar export to `output/master_iter1.wav`
+**Gap to target**: 3.09 LU (-13.59 → -10.50)
 
-**After export succeeds**: `flaas verify-audio output/master_iter1.wav`
+**Next iteration**: Increase compression (GR 15-18 dB, Makeup 15-18 dB, Limiter gain 28-30)
 
-**Future work**: Systematic control discovery (see DISCOVERY.md, NEXT_CHAPTER.md)
+**See**: `docs/reference/EXPORT_FINDINGS.md` for complete triage findings
+
+**Future work**: Automate compression/limiting control, scripted export (see DISCOVERY.md)
 
 ---
 
 ## APPLIED STATE
 
 **Master Track** (track_id=-1000):
-- Utility gain: **-0.750 linear** (was -1.000, delta +0.250 applied, NOT reset)
-- Devices: Utility(0), EQ Eight(1), Limiter(2)
+- **Device chain**: Glue Compressor → Limiter (validated)
+- **Master fader**: 0.0 dB (critical for peak control)
+- Limiter ceiling: -6.0 dB, gain: +24 dB (experiment #14)
+- Glue settings: GR ~12 dB, Makeup varies
 
 **Track 41** "42-52 long chords":
-- Devices: EQ Eight(0), ValhallaSpaceModulator(1), StudioVerse(2)
+- Plugins bypassed during triage (ValhallaSpaceModulator, StudioVerse)
 
-**Actions**: `data/actions/actions.json` contains last plan (delta +0.250)
+**Latest export**: `output/sanity_glue_gain24.wav`
+- LUFS: -13.59 (target -10.50, gap 3.09 LU)
+- Peak: -6.00 ✅
 
 ---
 
