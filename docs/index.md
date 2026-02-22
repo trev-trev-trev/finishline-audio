@@ -28,6 +28,7 @@ New to the project? Read these in order:
 
 ### Development
 - **[workflow/protocol.md](workflow/protocol.md)** - Collaboration protocol
+- **[workflow/execution-system.md](workflow/execution-system.md)** - Deterministic FSM + stability gates
 - **[reference/ENGINEERING_NOTEBOOK.md](reference/ENGINEERING_NOTEBOOK.md)** - Comprehensive API reference
 - **[project/mvp_remaining.md](project/mvp_remaining.md)** - What's left to build
 
@@ -37,6 +38,7 @@ New to the project? Read these in order:
 - **[reference/unique-lines/INDEX.md](reference/unique-lines/INDEX.md)** - Unique line ledger (code transparency)
 
 ### Workflow
+- **[workflow/execution-system.md](workflow/execution-system.md)** - Deterministic FSM + error taxonomy
 - **[workflow/manual_loop.md](workflow/manual_loop.md)** - Current manual iteration workflow
 - **[workflow/terminal-cheatsheet.md](workflow/terminal-cheatsheet.md)** - Command quick reference
 
@@ -60,6 +62,7 @@ New to the project? Read these in order:
 
 ### Workflow (Development Process)
 - [protocol.md](workflow/protocol.md) ⭐ **Essential**
+- [execution-system.md](workflow/execution-system.md) ⭐ **Essential - Deterministic FSM**
 - [terminal-cheatsheet.md](workflow/terminal-cheatsheet.md) ⭐ **Essential**
 - [manual_loop.md](workflow/manual_loop.md)
 
@@ -111,7 +114,8 @@ ls docs/project/     # Vision and planning
 - **Command syntax**: `workflow/terminal-cheatsheet.md`
 - **Function signature**: `reference/ENGINEERING_NOTEBOOK.md` (Section 2)
 - **OSC endpoints**: `reference/ENGINEERING_NOTEBOOK.md` (Section 3)
-- **Error taxonomy**: `workflow/protocol.md` (Error Taxonomy section)
+- **Error taxonomy**: `workflow/execution-system.md` (Section B)
+- **Stability gates**: `workflow/execution-system.md` (Section E)
 
 ---
 
