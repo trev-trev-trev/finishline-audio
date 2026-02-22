@@ -5,15 +5,17 @@
 
 ---
 
-## CURRENT TASK
+## CURRENT CHAPTER
 
-**Troubleshoot Ableton export crash to complete gain adjustment validation.**
+**Systematic Control Discovery** - Mirror Ableton's entire control surface in Python
 
-Execute in order:
-1. **4-8 bar export test** (loop selection only)
-2. **Disable third-party plugins** (Valhalla, StudioVerse) → retry
-3. **If works**: Re-enable plugins one-by-one to find culprit
-4. **Export** `output/master_iter1.wav` → `flaas verify-audio` to validate gain adjustment
+**Previous chapter closed**: Documentation consolidation (commit 7e401ff)
+
+**Discovered**: 108 OSC endpoint patterns available  
+**Target**: 300-500 commands, 95%+ Ableton coverage  
+**Approach**: Terminal-driven batches, validate each iteration
+
+**See**: `DISCOVERY.md`, `NEXT_CHAPTER.md` for complete roadmap
 
 ---
 
