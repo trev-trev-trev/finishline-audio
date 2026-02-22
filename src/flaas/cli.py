@@ -6,7 +6,7 @@ from flaas.scan import write_model_cache
 from flaas.analyze import write_analysis
 from flaas.check import write_check
 from flaas.plan import write_plan_gain_actions
-from flaas.apply import apply_actions_dry_run
+from flaas.apply import apply_actions_dry_run, apply_actions_osc
 
 def main() -> None:
     p = argparse.ArgumentParser(prog="flaas")
@@ -37,8 +37,11 @@ def main() -> None:
     pg.add_argument("wav")
     pg.add_argument("--out", default="data/actions/actions.json")
 
-    ap = sub.add_parser("apply", help="Apply actions (dry-run for now)")
+    ap = sub.add_parser("apply", help="Apply actions")
     ap.add_argument("--actions", default="data/actions/actions.json")
+    ap.add_argument("--dry", action="store_true")
+    ap.add_argument("--host", default="127.0.0.1")
+    ap.add_argument("--port", type=int, default=11000)
 
     args = p.parse_args()
 
@@ -82,7 +85,10 @@ def main() -> None:
         return
 
     if args.cmd == "apply":
-        apply_actions_dry_run(args.actions)
+        if args.dry:
+            apply_actions_dry_run(args.actions)
+        else:
+            apply_actions_osc(args.actions, target=RpcTarget(host=args.host, port=args.port))
         return
 
     p.print_help()
