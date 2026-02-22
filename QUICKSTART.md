@@ -30,19 +30,27 @@ make write       # 39s, commit gate
 
 # Audio verification
 flaas verify-audio <wav>  # Check LUFS/peak vs targets
+
+# Semi-automated experiments (NEW)
+flaas experiment-run <config.json>  # Batch parameter sweep
 ```
 
-## Next Action (Manual)
+## Next Action (Semi-Automated)
 
-**In Ableton** (Master chain tuning):
-1. Glue Compressor: Lower Threshold → GR 15-18 dB
-2. Glue Compressor: Makeup +15-18 dB
-3. Limiter: Gain +28-30 dB, Ceiling -6.5 dB
-4. Export Master (loop) → `output/master_iter<N>.wav`
-
-**After export**:
+**Run batch experiment** (3 runs):
 ```bash
-flaas verify-audio output/master_iter<N>.wav
+flaas experiment-run data/experiments/master_sweep.json
 ```
 
-**See detailed workflow**: `docs/reference/EXPORT_FINDINGS.md`
+**What happens**:
+1. Auto-sets params (Glue, Limiter, Master fader)
+2. Pauses for manual export (you click Export in Ableton)
+3. Auto-verifies LUFS/peak
+4. Logs to `output/experiments.jsonl`
+5. Early exit on success
+
+**Config**: GR 12-18 dB, Makeup 15-20 dB, Limiter 28-32 dB
+
+**Goal**: Close 3.09 LU gap (-13.59 → -10.50)
+
+**See usage guide**: `docs/reference/EXPERIMENT_RUNNER_USAGE.md`

@@ -219,23 +219,27 @@ def auto_tune_master(input_wav: str, output_wav: str, max_iterations: int = 10):
 
 ## Success Criteria
 
-### Phase 1 Success
-- ✅ Glue Compressor control via CLI
-- ✅ Master fader control via CLI
-- ✅ Batch experiment runner functional
-- ✅ 10+ experiments logged to `experiments.jsonl`
-- ✅ LUFS/peak targets hit consistently
+### Phase 1 Success Criteria
 
-### Phase 2 Success
-- ✅ Solo/mute control via CLI
-- ✅ Print/resample stem export functional
-- ✅ Stem verification working
-- ✅ Full mix + stems validated
+- ✅ Glue Compressor control via CLI (implemented)
+- ✅ Master fader control via CLI (implemented)
+- ✅ Batch experiment runner functional (implemented)
+- 🔄 10+ experiments logged to `experiments.jsonl` (ready to test)
+- 🔄 LUFS/peak targets hit consistently (ready to test)
+
+### Phase 2 Success Criteria (Future)
+
+- ⏳ Solo/mute control via CLI
+- ⏳ Print/resample stem export functional
+- ⏳ Stem verification working
+- ⏳ Full mix + stems validated
 
 ---
 
-**Status**: Roadmap revised. Export trigger NOT feasible. Semi-automated approach validated.
+**Status**: ✅ Phase 1.1-1.3 complete. Ready to test.
 
-**Next**: Build Glue Compressor OSC control (Phase 1.1)
+**Next**: Run `flaas experiment-run data/experiments/master_sweep.json` (close 3.09 LU gap)
 
-**See**: `docs/reference/EXPORT_AUTOMATION_FEASIBILITY.md` for probe details
+**See**: 
+- `docs/reference/EXPERIMENT_RUNNER_USAGE.md` - Usage guide
+- `docs/reference/EXPORT_AUTOMATION_FEASIBILITY.md` - Probe details
