@@ -337,16 +337,13 @@ rg '/live/\w+' "/Users/trev/Music/Ableton/User Library/Remote Scripts/AbletonOSC
 
 ---
 
-## NEXT ACTIONS (BLOCKED UNTIL EXPORT LOOP WORKS)
+## NEXT ACTIONS (EXPORT LOOP UNBLOCKED ✅)
 
-**BLOCKER**: Export crash prevents closed-loop audio iteration (`plan-gain → apply → export → verify-audio`)
+**Export loop functional**: Manual iteration working (16 experiments complete)
 
-**Must complete first**:
-1. Fix export crash in Ableton (disable third-party plugins)
-2. Validate gain adjustment via `flaas verify-audio output/master_iter1.wav`
-3. Confirm export loop is stable and repeatable
+**Current focus**: Close LUFS gap (3.09 LU remaining)
 
-**After export loop works**:
+**After LUFS target hit**:
 1. Populate `docs/ENDPOINT_REGISTRY.json` (top 50 endpoints with full specs)
 2. Generate Python stubs from registry
 3. Wire CLI parsers

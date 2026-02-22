@@ -286,17 +286,16 @@ make write-fast
 
 ## NEXT IMMEDIATE ACTION
 
-**BLOCKED UNTIL EXPORT LOOP WORKS**
+**EXPORT LOOP FUNCTIONAL** ✅
 
-**Current blocker**: Export crash prevents closed-loop audio iteration
+**Current focus**: Close LUFS gap (3.09 LU remaining) via compression tuning
 
-**Must complete first**:
-1. In Ableton: Disable ValhallaSpaceModulator + StudioVerse on track 41
-2. Attempt 4-8 bar export to `output/master_iter1.wav`
-3. Run `flaas verify-audio output/master_iter1.wav`
-4. Confirm gain adjustment is reflected in measurements
+**Manual iteration** (in Ableton):
+1. Increase compression (GR 15-18 dB, Makeup 15-18 dB)
+2. Adjust limiter (Gain 28-30 dB, Ceiling -6.5 dB)
+3. Export + verify → Iterate until targets hit
 
-**After export loop works**:
+**After LUFS/peak targets achieved**:
 1. Populate `docs/ENDPOINT_REGISTRY.json` (top 50 endpoints)
 2. Generate track control commands from registry
 3. Test via `make write-fast`
