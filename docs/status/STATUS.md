@@ -1,6 +1,6 @@
 # STATUS (LOAD THIS FIRST)
 
-**Last updated**: 2026-02-22 23:30 UTC  
+**Last updated**: 2026-02-23 04:35 UTC  
 **Primary doc**: `STATE.md` (operational state, single source of truth)  
 **This doc**: Operating procedures and contract  
 **Repo**: `/Users/trev/Repos/finishline_audio_repo`
@@ -55,6 +55,7 @@ cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate
 
 **Key directories**:
 - `src/flaas/` - Python modules
+- `tests/` - Unit tests (51 tests, automated CI)
 - `docs/` - All documentation
 - `data/caches/` - model_cache.json (scan results)
 - `data/actions/` - actions.json (planned changes)
@@ -62,6 +63,7 @@ cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate
 - `data/registry/` - device maps (eq8_map, device_map)
 - `input/` - test audio files
 - `output/` - exported renders
+- `logs/tests/` - Automated test run logs
 - `scripts/` - automation scripts
 
 ---
@@ -97,7 +99,11 @@ cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate
 
 **Other commands**: `plan-gain`, `apply`, `verify`, `device-set-safe-param`, `eq8-set`, `limiter-set`
 
+**Unit tests**: `python -m pytest tests/ -v` (51 tests, <1s, automated CI runs every 30 min)  
 **Smoke tests**: `make smoke` (7s), `make write-fast` (9s), `make write` (39s)
+
+**Test results**: `cat logs/tests/latest.log` (latest automated run)  
+**Test docs**: `tests/README.md`, `TESTING_SETUP_SUMMARY.md`
 
 ---
 
@@ -111,7 +117,8 @@ cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate
 **Limiter alone insufficient**: Need compression before limiter for loudness  
 **Export settings**: Rendered Track = Master, Normalize = OFF  
 **Premium plugins**: Waves C6/SSL/L3 automatable via OSC (55, 13, 8 params respectively)  
-**F6 limitation**: Only Device On parameter exposed (set static preset manually)
+**F6 limitation**: Only Device On parameter exposed (set static preset manually)  
+**Testing**: 51 unit tests run automatically every 30 minutes (launchd service)
 
 ---
 
@@ -252,6 +259,7 @@ After probe: ONE action (read/edit/run), then stop.
 
 **Primary**: `STATE.md` (operational state)  
 **This file**: Operating procedures  
+**Testing**: `tests/README.md` (testing guide), `TESTING_SETUP_SUMMARY.md` (CI setup)  
 **Legacy docs**: `docs/` (reference only)
 
 ---

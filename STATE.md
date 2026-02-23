@@ -1,6 +1,6 @@
 # STATE
 
-**Updated**: 2026-02-22 23:30 UTC  
+**Updated**: 2026-02-23 04:35 UTC  
 **Repo**: `/Users/trev/Repos/finishline_audio_repo`
 
 ---
@@ -36,12 +36,15 @@
 - ✅ Export trigger automated (macOS UI automation via AppleScript)
 - ✅ Verification automated (LUFS, sample peak, true peak)
 - ✅ Logging automated (JSONL receipts)
+- ✅ Testing automated (51 tests, runs every 30 minutes via launchd)
 - ⚠️ Master fader (manual pre-run check, no OSC endpoint)
 
 **See**: 
 - `docs/reference/STREAMING_STANDARDS.md` - Official platform specs
 - `docs/reference/MASTERING_RECIPE.md` - Technical guide
 - `docs/reference/EXPORT_FINDINGS.md` - Experiment findings
+- `tests/README.md` - Testing framework (51 tests, automated CI)
+- `TESTING_SETUP_SUMMARY.md` - Complete testing infrastructure guide
 - `HUMAN_ACTIONS_REQUIRED.md` - Run checklist
 
 ---
@@ -103,7 +106,36 @@ device_id = names.index("Utility")  # Case-insensitive
 
 ## COMMANDS
 
-### Smoke Tests
+### Unit Tests (Automated CI)
+```bash
+# Run all tests manually
+python -m pytest tests/ -v                    # 51 tests, <1s
+
+# With coverage report
+python -m pytest tests/ --cov=src/flaas --cov-report=html
+open htmlcov/index.html
+
+# Check automated test results (runs every 30 min)
+cat logs/tests/latest.log                     # Latest automated run
+ls -lt logs/tests/test_run_*.log | head -5    # Recent runs
+
+# Trigger automated test now (doesn't wait 30 min)
+launchctl start com.finishline.flaas.tests
+
+# Service status
+launchctl list | grep flaas                   # Should show: com.finishline.flaas.tests
+```
+
+**Test modules**: 
+- `test_analyze.py` - Audio analysis (14 tests, 85% coverage)
+- `test_osc_rpc.py` - OSC communication (6 tests, 97% coverage)
+- `test_preflight.py` - Pre-flight checks (12 tests, 81% coverage)
+- `test_targets.py` - Constants/resolution (10 tests, 100% coverage)
+- `test_util.py` - Utility functions (9 tests, 100% coverage)
+
+**See**: `tests/README.md` for complete testing guide
+
+### Smoke Tests (Integration)
 ```bash
 make smoke       # 7s, 8 tests (read-only)
 make write-fast  # 9s, 4 tests (dev gate)
