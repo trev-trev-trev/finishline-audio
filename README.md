@@ -41,7 +41,10 @@ Automatically optimizes Waves C6/SSL/L3 + Saturator to hit target loudness while
 # Mastering (autonomous)
 flaas master-premium --mode loud_preview --yes --port 11000     # -9 LUFS (loud)
 flaas master-premium --mode streaming_safe --yes --port 11000   # -14 LUFS (Spotify)
-flaas verify-audio output/your_master.wav                        # Analyze result
+
+# Verification
+flaas verify-audio output/your_master.wav                        # Basic analysis
+python scripts/validate_streaming.py output/your_master.wav     # Platform validation
 
 # Development
 make smoke       # Sanity check (7s)

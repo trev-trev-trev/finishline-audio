@@ -49,10 +49,14 @@ flaas verify-audio output/track_master.wav
 # Analyze any WAV file
 flaas verify-audio path/to/file.wav
 
+# Validate against streaming platform requirements
+python scripts/validate_streaming.py path/to/file.wav
+
 # Expected output:
 # - LUFS (integrated loudness)
 # - True Peak (dBTP, must be < -1.0 for streaming)
 # - Duration, sample rate, channels
+# - Platform-specific compatibility (Spotify, Apple, YouTube, Tidal)
 ```
 
 ---
