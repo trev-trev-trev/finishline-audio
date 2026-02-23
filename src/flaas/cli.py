@@ -217,6 +217,7 @@ def main() -> None:
     master_prem.add_argument("--port", type=int, default=11000)
     master_prem.add_argument("--no-auto-export", action="store_true", help="Disable auto-export (manual)")
     master_prem.add_argument("--mode", choices=["streaming_safe", "loud_preview", "headroom"], default="loud_preview", help="Target mode: streaming_safe (-14 LUFS, -1 dBTP), loud_preview (-9 LUFS, -1 dBTP, default), headroom (-10 LUFS, -2 dBTP)")
+    master_prem.add_argument("--yes", "-y", action="store_true", help="Auto-confirm all prompts")
 
     args = p.parse_args()
 
@@ -414,6 +415,7 @@ def main() -> None:
             target=RpcTarget(host=args.host, port=args.port),
             auto_export_enabled=(not args.no_auto_export),
             mode=args.mode,
+            skip_prompts=args.yes,
         )
         raise SystemExit(code)
 

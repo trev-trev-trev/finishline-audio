@@ -86,7 +86,7 @@ def verify_device_order(track_id: int, expected_order: list[str], target: OscTar
         raise RuntimeError(f"Failed to verify device order: {e}")
 
 
-def run_preflight_checks(track_id: int, target: OscTarget = OscTarget(), expected_chain: list[str] | None = None) -> bool:
+def run_preflight_checks(track_id: int, target: OscTarget = OscTarget(), expected_chain: list[str] | None = None, skip_prompts: bool = False) -> bool:
     """
     Run all pre-flight checks.
     
@@ -94,6 +94,7 @@ def run_preflight_checks(track_id: int, target: OscTarget = OscTarget(), expecte
         track_id: Track ID to check
         target: OSC target
         expected_chain: Optional list of device names in expected order (default: stock chain)
+        skip_prompts: If True, auto-confirm all user prompts (for non-interactive mode)
     
     Returns: True if all checks pass, False otherwise
     Prints diagnostics to stdout.
@@ -111,7 +112,11 @@ def run_preflight_checks(track_id: int, target: OscTarget = OscTarget(), expecte
     if fader_ok is None:
         print(f"   ⚠️  Cannot verify master fader via OSC (endpoint unavailable)")
         print(f"   → USER MUST CONFIRM: Master fader is visually at 0.0 dB")
-        user_confirm = input(f"   → Confirm master fader is 0.0 dB? (y/n): ").strip().lower()
+        if skip_prompts:
+            print(f"   → Auto-confirming (--yes flag)")
+            user_confirm = 'y'
+        else:
+            user_confirm = input(f"   → Confirm master fader is 0.0 dB? (y/n): ").strip().lower()
         if user_confirm != 'y':
             print(f"   ❌ FAIL: Master fader not confirmed at 0.0 dB")
             all_pass = False

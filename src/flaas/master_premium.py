@@ -96,6 +96,7 @@ def master_premium(
     target: OscTarget = OscTarget(),
     auto_export_enabled: bool = True,
     mode: str = "loud_preview",  # streaming_safe | loud_preview | headroom
+    skip_prompts: bool = False,
 ) -> int:
     """
     Generate premium master using Waves C6/SSL/L3 + stock Utility/Saturator.
@@ -145,7 +146,7 @@ def master_premium(
     
     # Check 1: Master fader (will prompt user if OSC fails)
     expected_order = ["Utility", "EQ Eight", "C6", "F6", "SSL", "Saturator", "L3"]
-    if not run_preflight_checks(MASTER_TRACK_ID, target, expected_chain=expected_order):
+    if not run_preflight_checks(MASTER_TRACK_ID, target, expected_chain=expected_order, skip_prompts=skip_prompts):
         print("\n❌ Pre-flight checks failed. Fix issues and re-run.")
         return 1
     
