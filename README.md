@@ -34,6 +34,9 @@ Automatically optimizes Waves C6/SSL/L3 + Saturator to hit target loudness while
 ## Commands
 
 ```bash
+# System Health
+./scripts/health_check.sh                                        # Check all systems
+
 # Mastering (autonomous)
 flaas master-premium --mode loud_preview --yes --port 11000     # -9 LUFS (loud)
 flaas master-premium --mode streaming_safe --yes --port 11000   # -14 LUFS (Spotify)
