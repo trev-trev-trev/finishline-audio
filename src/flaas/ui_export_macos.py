@@ -124,26 +124,37 @@ on run
         tell (item 1 of (processes whose bundle identifier starts with "com.ableton.live"))
             try
                 click button "Export" of window 1
-                delay 1.0
+                delay 1.5
             on error
                 log "Step 4 fallback: Pressing Return"
                 keystroke return
-                delay 1.0
+                delay 1.5
             end try
         end tell
     end tell
     
-    log "Step 5: Navigate to folder (Cmd+Shift+G)"
+    log "Step 5: Navigate to folder (Cmd+Shift+G) - FORCE correct location"
     tell application "System Events"
         tell (item 1 of (processes whose bundle identifier starts with "com.ableton.live"))
-            keystroke "g" using {{command down, shift down}}
-            delay 0.5
+            -- Clear any cached location by clicking in location dropdown (if visible)
+            try
+                -- Click the location bar to ensure we can navigate
+                keystroke "l" using {{command down}}
+                delay 0.3
+            end try
             
-            log "Step 6: Type absolute folder path"
+            -- Now force absolute path navigation
+            keystroke "g" using {{command down, shift down}}
+            delay 0.8
+            
+            log "Step 6: Type absolute folder path (clearing first)"
+            -- Clear any pre-filled path
+            keystroke "a" using {{command down}}
+            delay 0.2
             keystroke "{out_dir}"
-            delay 0.3
-            keystroke return
             delay 0.5
+            keystroke return
+            delay 0.8
             
             log "Step 7: Clear filename field and type new name (WITHOUT extension)"
             keystroke "a" using {{command down}}
