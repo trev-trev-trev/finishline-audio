@@ -43,6 +43,7 @@ data/reports/
 # Logs
 *.log
 logs/
+!logs/tests/.gitkeep
 
 # Build artifacts
 *.egg-info/
