@@ -44,7 +44,8 @@ flaas master-premium --mode streaming_safe --yes --port 11000   # -14 LUFS (Spot
 
 # Verification
 flaas verify-audio output/your_master.wav                        # Basic analysis
-python scripts/validate_streaming.py output/your_master.wav     # Platform validation
+python scripts/validate_streaming.py output/your_master.wav     # Single file validation
+python scripts/batch_validate.py                                 # Batch validate all masters
 
 # Development
 make smoke       # Sanity check (7s)
