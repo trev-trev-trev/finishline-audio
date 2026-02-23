@@ -1,33 +1,41 @@
 # STATE
 
-**Updated**: 2026-02-22 19:30 UTC  
+**Updated**: 2026-02-22 23:30 UTC  
 **Repo**: `/Users/trev/Repos/finishline_audio_repo`
 
 ---
 
 ## CURRENT TASK
 
-**Master consensus generator CORRECTED** ✅
+**Stand Tall - Premium Master Generation** 🚧
 
-**Command**: `flaas master-consensus --mode loud_preview`
+**Project**: Stand Tall (111 tracks, V1/V2 element layers, vocals)
 
-**Corrected targets** (per official Spotify docs):
-- loud_preview: **-9 LUFS, -2 dBTP** (competitive commercial, default)
+**Command**: `flaas master-premium --mode loud_preview`
+
+**Chain**: Utility → EQ Eight → Waves C6 → F6 → SSL → Saturator → L3 UltraMaximizer
+
+**Targets**:
+- loud_preview: **-9 LUFS, -1 dBTP** (competitive commercial, default)
 - streaming_safe: **-14 LUFS, -1 dBTP** (official Spotify spec)
-- headroom: **-10 LUFS, -6 dBFS** (internal safety)
+- headroom: **-10 LUFS, -2 dBTP** (internal safety)
 
-**Key fixes**:
-- ✅ True peak (dBTP) measurement added (4x oversampling)
-- ✅ Saturator support (optional, recommended for RMS boost)
-- ✅ Diminishing returns detection (stops pushing limiter when < 0.2 LU improvement)
-- ✅ Mode-based parameter presets (streaming_safe vs loud_preview vs headroom)
-- ✅ 3-stage processing: Glue → Saturator → Limiter
+**Premium chain features**:
+- ✅ Waves C6 multiband compression (55 params) - per-band threshold/gain/attack/range
+- ✅ Waves SSL G-Master compression (13 params) - glue with analog character
+- ✅ Waves L3 UltraMaximizer (8 params) - transparent limiting
+- ✅ Stock Saturator (17 params) - harmonic RMS boost
+- ⚠️ Waves F6 (1 param - Device On only) - static preset required
 
-**Previous errors corrected**:
-- ❌ -8 LUFS is NOT "Spotify ceiling" (it's -14)
-- ❌ -6 dBFS is internal safety, NOT streaming spec
-- ❌ Master fader boost is WRONG (post-chain, defeats limiter)
-- ❌ Limiter gain to max has diminishing returns
+**Algorithm improvements**:
+- ✅ True peak (dBTP) measurement (4x oversampling approximation)
+- ✅ Diminishing returns detection (stops if LUFS improvement < 0.2 LU)
+- ✅ Mode-based parameter presets (aggressive for loud_preview, gentle for streaming_safe)
+- ✅ Adaptive convergence (15 iterations max, early stopping on target hit)
+- ✅ Per-iteration JSONL logging (full parameter + metric history)
+
+**Completed projects**:
+- ✅ Life You Chose - `output/life_you_chose/master_loud_preview_iter1.wav` (-23.41 LUFS, user approved)
 
 **Automation status**: 
 - ✅ Parameter control (Glue, Saturator, Limiter) automated
@@ -46,14 +54,23 @@
 
 ## APPLIED STATE
 
-**Master Track** (track_id=-1000):
-- **Device chain**: Utility → EQ → Glue Compressor → **Saturator (recommended)** → Limiter
-- **Master fader**: 0.0 dB (CRITICAL - post-chain, defeats limiter if boosted)
+**Current Project**: Stand Tall
 
-**Latest result** (from manual experiments):
-- LUFS: -13.59 (too quiet for commercial)
-- Peak: -6.00 dBFS
-- Gap to target: 3.09 LU (if targeting -10.5)
+**Master Track** (track_id=-1000):
+- **Device chain**: Utility → EQ Eight → Waves C6 → Waves F6 → Waves SSL → Saturator → Waves L3
+- **Master fader**: 0.0 dB (CRITICAL - post-chain, defeats limiter if boosted)
+- **F6 preset**: Static (2-5 kHz gentle cut or flat) - not automated
+
+**Project structure**:
+- 111 tracks total
+- V1 elements: Active (tracks with devices)
+- V2 elements: Mostly muted (0 devices)
+- Key tracks: ELEMENTS, float a lil higher, orbit earth, levitate high, VOCALS, V2 [VOCALS], Chorus Features
+
+**Previous project (Life You Chose)**:
+- Final master: `output/life_you_chose/master_loud_preview_iter1.wav`
+- LUFS: -23.41 (iteration 1, export automation issues, user approved as-is)
+- All exports moved to `output/life_you_chose/` subfolder
 
 ---
 
@@ -105,35 +122,73 @@ make write       # 39s, 13 tests (commit gate)
 - 20: read failure
 - 30: write failure
 
-### Master Consensus (Corrected)
+### Master Consensus (Stock Ableton Chain)
 ```bash
 flaas master-consensus --mode loud_preview     # -9 LUFS, -2 dBTP (default, LOUD)
 flaas master-consensus --mode streaming_safe   # -14 LUFS, -1 dBTP (official Spotify)
 flaas master-consensus --mode headroom         # -10 LUFS, -6 dBFS (internal)
 ```
 
+**Chain**: Utility → EQ Eight → Glue Compressor → Saturator → Limiter  
 **Output**: `output/master_{mode}.wav`, `output/master_{mode}.jsonl`
+
+### Master Premium (Waves + Stock Hybrid)
+```bash
+flaas master-premium --mode loud_preview     # -9 LUFS, -1 dBTP (default, LOUD)
+flaas master-premium --mode streaming_safe   # -14 LUFS, -1 dBTP (official Spotify)
+flaas master-premium --mode headroom         # -10 LUFS, -2 dBTP (internal)
+```
+
+**Chain**: Utility → EQ Eight → Waves C6 → Waves F6 → Waves SSL → Saturator → Waves L3  
+**Output**: `output/stand_tall_premium_{mode}_iterN.wav`, `output/stand_tall_premium_{mode}.jsonl`
+
+**Premium features**:
+- C6 multiband leveling (per-band threshold/gain control)
+- SSL glue compression (analog character)
+- L3 transparent limiting (better than stock Limiter)
+- F6 static preset (manual setup required)
 
 ---
 
 ## NEXT ACTION
 
-**Run consensus master with corrected targets**:
+**Run Stand Tall premium master optimization**:
 
 ```bash
-flaas master-consensus --mode loud_preview
+cd /Users/trev/Repos/finishline_audio_repo
+./RUN_STAND_TALL_NOW.sh
 ```
 
-**Pre-flight**:
-- [ ] Ableton Live running with project open
-- [ ] Master fader = 0.0 dB (verify visually)
-- [ ] Device chain: Utility → EQ → Glue → **Saturator** → Limiter
-- [ ] Saturator added (if missing, command will warn but continue)
-- [ ] Loop/selection = 8 bars
-- [ ] Export folder = `/Users/trev/Repos/finishline_audio_repo/output`
-- [ ] Export defaults: Rendered Track = Master, Normalize = OFF
+**Or directly**:
+```bash
+flaas master-premium --mode loud_preview
+```
 
-**Goal**: Generate ONE LOUD master (competitive commercial loudness)
+**Pre-flight checklist (CRITICAL ORDER)**:
+
+**Step 1: Vocal Processing (DO THIS FIRST)**
+- [ ] VOCALS bus: Utility → Vocal Rider → Sibilance → F6 → R-Vox → Utility
+- [ ] Chorus Features bus: Utility → F6 → DeEsser → S1 → R-Vox
+- [ ] Reverb/Delay returns: EQ + sidechain ducking from VOCALS
+- [ ] Test full track, fix extreme cases with clip gain
+- **Why:** Master chain exaggerates vocal inconsistencies - fix at source first
+- **See:** `STAND_TALL_VOCAL_SETUP.md` for complete guide
+
+**Step 2: Master Chain Setup**
+- [ ] Ableton: Stand Tall project open (111 tracks)
+- [ ] Loop brace: 8-16 bars (include loud/quiet vocal sections)
+- [ ] Master chain: Utility → EQ → C6 → F6 → SSL → Saturator → L3 (in order)
+- [ ] F6 preset: Set manually (gentle 2-5 kHz cut or flat)
+- [ ] Master fader: 0.0 dB (verify visually)
+- [ ] All plugin windows closed
+- [ ] Export defaults: Rendered Track = Master, Normalize = OFF
+- [ ] Export folder: `/Users/trev/Repos/finishline_audio_repo/output`
+
+**Expected runtime**: 30-60 minutes (5-15 iterations)
+
+**Goal**: Generate premium Stand Tall master at -9.0 LUFS, -1.0 dBTP
+
+**See**: `STAND_TALL_READY.md` for complete workflow guide
 
 ---
 

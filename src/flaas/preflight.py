@@ -86,9 +86,14 @@ def verify_device_order(track_id: int, expected_order: list[str], target: OscTar
         raise RuntimeError(f"Failed to verify device order: {e}")
 
 
-def run_preflight_checks(track_id: int, target: OscTarget = OscTarget()) -> bool:
+def run_preflight_checks(track_id: int, target: OscTarget = OscTarget(), expected_chain: list[str] | None = None) -> bool:
     """
     Run all pre-flight checks.
+    
+    Args:
+        track_id: Track ID to check
+        target: OSC target
+        expected_chain: Optional list of device names in expected order (default: stock chain)
     
     Returns: True if all checks pass, False otherwise
     Prints diagnostics to stdout.
@@ -121,19 +126,21 @@ def run_preflight_checks(track_id: int, target: OscTarget = OscTarget()) -> bool
     
     # Check 2: Device order
     print(f"\n2. Device chain order verification...")
-    expected_order = ["Glue Compressor", "Saturator", "Limiter"]
+    if expected_chain is None:
+        expected_chain = ["Glue Compressor", "Saturator", "Limiter"]
+    
     try:
-        order_ok, actual_devices = verify_device_order(track_id, expected_order, target)
+        order_ok, actual_devices = verify_device_order(track_id, expected_chain, target)
         
-        print(f"   Expected: Glue → Saturator → Limiter")
+        print(f"   Expected: {' → '.join(expected_chain)}")
         print(f"   Actual: {' → '.join(actual_devices)}")
         
         if order_ok:
             print(f"   ✅ PASS: Device order correct")
         else:
             print(f"   ❌ FAIL: Device order incorrect")
-            print(f"   → Limiter must be LAST (final peak catcher)")
-            print(f"   → Saturator (optional) should be BEFORE Limiter")
+            print(f"   → Limiter/L3 must be LAST (final peak catcher)")
+            print(f"   → Saturator (optional) should be BEFORE limiter")
             all_pass = False
     
     except RuntimeError as e:

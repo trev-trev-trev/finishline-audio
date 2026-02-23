@@ -1,6 +1,6 @@
 # STATUS (LOAD THIS FIRST)
 
-**Last updated**: 2026-02-22 18:50 UTC  
+**Last updated**: 2026-02-22 23:30 UTC  
 **Primary doc**: `STATE.md` (operational state, single source of truth)  
 **This doc**: Operating procedures and contract  
 **Repo**: `/Users/trev/Repos/finishline_audio_repo`
@@ -70,13 +70,18 @@ cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate
 
 **See `STATE.md` for complete operational details.**
 
-**Current task**: Close LUFS gap (3.09 LU remaining) via compression tuning
+**Current projects**:
+- ✅ Life You Chose - DONE (moved to `output/life_you_chose/`)
+- 🚧 Stand Tall - Ready to run premium optimization
 
-**Applied state**: Master chain validated (Glue Compressor → Limiter), Master fader 0.0 dB
+**Current task**: Generate Stand Tall master with premium Waves chain
 
-**Latest result**: LUFS -13.59, Peak -6.00 (experiment #14)
+**Applied state**: 
+- Premium chain: Utility → EQ → C6 → F6 → SSL → Saturator → L3
+- Master fader 0.0 dB
+- 111 tracks total (V1/V2 layers, vocals, elements)
 
-**Status**: Export loop functional ✅
+**Status**: `flaas master-premium` command ready ✅
 
 ---
 
@@ -84,7 +89,11 @@ cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate
 
 **See `STATE.md` for command reference.**
 
-**Key**: `plan-gain`, `apply`, `verify` (master track auto-resolution), `device-set-safe-param`, `eq8-set`, `limiter-set`
+**Key mastering commands**:
+- `flaas master-consensus` - Stock Ableton chain (Glue/Saturator/Limiter)
+- `flaas master-premium` - Waves premium chain (C6/SSL/L3)
+
+**Other commands**: `plan-gain`, `apply`, `verify`, `device-set-safe-param`, `eq8-set`, `limiter-set`
 
 **Smoke tests**: `make smoke` (7s), `make write-fast` (9s), `make write` (39s)
 
@@ -98,7 +107,9 @@ cd /Users/trev/Repos/finishline_audio_repo && source .venv/bin/activate
 **Device resolution**: Query `/live/track/get/devices/name`, response is `(track_id, name0, name1, ...)`, skip first element  
 **Master fader**: Post-device chain, must be 0.0 dB for predictable peak control  
 **Limiter alone insufficient**: Need compression before limiter for loudness  
-**Export settings**: Rendered Track = Master, Normalize = OFF
+**Export settings**: Rendered Track = Master, Normalize = OFF  
+**Premium plugins**: Waves C6/SSL/L3 automatable via OSC (55, 13, 8 params respectively)  
+**F6 limitation**: Only Device On parameter exposed (set static preset manually)
 
 ---
 
@@ -159,49 +170,43 @@ Type a command.
 
 ### NEXT ACTION
 
-**Task**: Close LUFS gap (manual compression tuning)
+**Task**: Generate Stand Tall premium master
 
-**Status**: Export loop functional ✅ (16 experiments complete)
+**Project**: Stand Tall (111 tracks, V1/V2 layers, vocals, elements)
 
-**Current gap**: 3.09 LU (-13.59 → -10.50 LUFS)
+**Chain**: Utility → EQ Eight → Waves C6 → F6 → SSL → Saturator → L3
 
-**Best result so far**: LUFS -13.59, Peak -6.00 (experiment #14)
-
-**Step 1: Tune compression (in Ableton)**
-1. Master chain: `[Utility] → [EQ Eight] → [Glue Compressor] → [Limiter]`
-2. Master fader: 0.0 dB (critical for peak control)
-3. Glue Compressor:
-   - Lower Threshold → GR 15-18 dB
-   - Makeup +15-18 dB
-4. Limiter:
-   - Gain +28-30 dB
-   - Ceiling -6.5 dB
-
-**Step 2: Export**
-- File → Export Audio/Video
-- Rendered Track = Master
-- Normalize = OFF
-- File: `output/master_iter<N>.wav`
-
-**Step 3: Verify**
+**Command**:
 ```bash
-flaas verify-audio output/master_iter<N>.wav
+cd /Users/trev/Repos/finishline_audio_repo
+./RUN_STAND_TALL_NOW.sh
 ```
 
-**Step 4: Adjust**
-- Peak > -6.0: Reduce limiter gain OR lower ceiling
-- LUFS < -10.5: Increase compression OR increase limiter gain
-- Repeat
+**Or directly**:
+```bash
+flaas master-premium --mode loud_preview
+```
 
-**Expected outcome**: 
-- Hit targets: LUFS -10.50, Peak -6.00
-- Validate compression + limiter strategy
+**Pre-flight checklist**:
+- [ ] Ableton: Stand Tall project open
+- [ ] Loop brace: 8-16 bars (include loud/quiet vocal sections)
+- [ ] Master chain: Utility → EQ → C6 → F6 → SSL → Saturator → L3
+- [ ] F6 preset: Gentle 2-5 kHz cut (or flat)
+- [ ] Master fader: 0.0 dB
+- [ ] All plugin windows closed
+- [ ] Export defaults: Master, Normalize OFF, output folder correct
 
-**On success**: 
-- Document final settings
-- Begin master processing automation (OSC control for Glue/Limiter)
+**Expected**:
+- Target: -9.0 LUFS, -1.0 dBTP (loud_preview)
+- Runtime: 30-60 min (5-15 iterations)
+- Output: `output/stand_tall_premium_loud_preview_iterN.wav`
 
-**See detailed workflow**: `docs/reference/EXPORT_FINDINGS.md`
+**On success**:
+- Compare to Life You Chose master
+- Document Waves parameter optimization
+- Consider additional tracks if needed
+
+**See**: `STAND_TALL_READY.md` for complete guide
 
 ---
 
@@ -253,9 +258,13 @@ After probe: ONE action (read/edit/run), then stop.
 
 **See `STATE.md` for complete issue list and workarounds.**
 
-**Current**: Export loop functional → Close LUFS gap via compression tuning
+**Current**: Premium chain automation ready → Run Stand Tall optimization
 
-**See**: `docs/reference/EXPORT_FINDINGS.md` for 16 experiments + critical findings
+**Completed projects**:
+- Life You Chose: `output/life_you_chose/master_loud_preview_iter1.wav` (-23.41 LUFS, iteration 1)
+- Export automation: Fixed .wav.wav bug (Ableton auto-appends extension)
+
+**See**: `docs/reference/EXPORT_FINDINGS.md` for experiment history
 
 ---
 
