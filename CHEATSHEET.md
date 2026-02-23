@@ -52,6 +52,11 @@ flaas verify-audio path/to/file.wav
 # Validate single file against streaming platforms
 python scripts/validate_streaming.py path/to/file.wav
 
+# QC Compare - target alignment, gain-match simulation, LRA
+python scripts/qc_compare.py path/to/file.wav
+python scripts/qc_compare.py path/to/file.wav --target -14  # Explicit target
+python scripts/qc_compare.py path/to/file.wav --json       # JSON output
+
 # Batch validate ALL files in output/ directory
 python scripts/batch_validate.py
 
