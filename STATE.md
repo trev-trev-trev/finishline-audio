@@ -152,16 +152,20 @@ flaas master-premium --mode headroom         # -10 LUFS, -2 dBTP (internal)
 
 ## NEXT ACTION
 
-**Run Stand Tall premium master optimization**:
+**ANALYSIS COMPLETE - Execute vocal processing now**:
 
-```bash
-cd /Users/trev/Repos/finishline_audio_repo
-./RUN_STAND_TALL_NOW.sh
-```
+**File:** `EXECUTE_NOW.md` (complete step-by-step guide)
 
-**Or directly**:
+**Analysis findings:**
+- True Peak: +0.46 dBTP (⚠️ CLIPPING!)
+- RMS Std Dev: 30.30 dB (⚠️ EXTREME inconsistency)
+- Peak: -1.5 dBFS (too hot)
+- Conclusion: Clip gain (Layer A) is CRITICAL (expect 10-20 adjustments)
+
+**Execution workflow:**
 ```bash
-flaas master-premium --mode loud_preview
+# Open EXECUTE_NOW.md and follow Phase 0-5
+# OR quick reference below
 ```
 
 **Pre-flight checklist (CRITICAL ORDER)**:
