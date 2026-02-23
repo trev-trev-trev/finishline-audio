@@ -26,6 +26,7 @@ Automatically optimizes Waves C6/SSL/L3 + Saturator to hit target loudness while
 |------|---------|
 | **[`QUICK_START.md`](QUICK_START.md)** | 30-minute setup guide (start here) |
 | **[`CHEATSHEET.md`](CHEATSHEET.md)** | **Quick reference** (all commands, one page) |
+| [`SECURITY_AUDIT_REPORT.md`](SECURITY_AUDIT_REPORT.md) | Security compliance audit (24 findings) |
 | [`tests/README.md`](tests/README.md) | Testing framework (71 tests, automated CI every 30 min) |
 | [`STATE.md`](STATE.md) | Operational state & commands |
 | [`docs/API.md`](docs/API.md) | Python API reference |
