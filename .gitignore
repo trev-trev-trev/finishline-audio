@@ -2,31 +2,63 @@
 .DS_Store
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 .venv/
 venv/
+env/
 .env
+*.so
+.Python
 
-# Audio / large outputs (recursive)
-input/*.wav
+# Audio / large outputs (recursive - keep repo lean)
+input/**/*.wav
+input/**/*.mp3
+input/**/*.flac
+input/**/*.aiff
 output/**/*.wav
+output/**/*.mp3
 output/**/*.flac
 output/**/*.aiff
-data/reports/*.html
+*.wav
+*.mp3
+*.flac
+*.aiff
+
+# Generated data (caches, actions, reports)
 data/caches/*.json
 data/actions/*.json
 data/timelines/*.json
 data/registry/*.json
+data/reports/*.html
+data/reports/*.json
+data/reports/
 
 # Logs
 *.log
+logs/
 
 # Build artifacts
 *.egg-info/
+dist/
+build/
+*.egg
 
-# Generated reports
-data/reports/*.json
-data/reports/
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Temporary files
+tmp/
+temp/
+*.tmp

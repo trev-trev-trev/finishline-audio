@@ -1,72 +1,76 @@
 # FLAAS - Finishline Audio Automated System
 
-**Autonomous audio mastering for Ableton Live** - OSC-controlled Waves plugin automation with iterative LUFS/True Peak optimization.
+**Autonomous audio mastering for Ableton Live.** OSC-controlled premium plugin automation with iterative LUFS/True Peak optimization.
 
-## What It Does
+## Quick Start
 
-**One command. 30 minutes. Streaming-ready master.**
+**One command → streaming-ready master in 30 minutes:**
 
 ```bash
 flaas master-premium --mode loud_preview --yes --port 11000
 ```
 
-Automatically:
-- ✅ Controls Waves C6, SSL, L3 + Ableton Saturator via OSC
-- ✅ Exports iterations via UI automation
-- ✅ Analyzes LUFS, Peak, True Peak
-- ✅ Converges to target loudness (-9, -11, or -14 LUFS)
-- ✅ Ensures streaming safety (True Peak < -1.0 dBTP)
-- ✅ Logs full parameter + metric history
+Automatically optimizes Waves C6/SSL/L3 + Saturator to hit target loudness while ensuring True Peak < -1.0 dBTP for streaming safety.
+
+**See [`QUICK_START.md`](QUICK_START.md) for setup guide.**
 
 ## Status
 
-**Production-ready.** 2 songs mastered:
-- Life You Chose: -23.41 LUFS (user approved)
-- Stand Tall: -14.36 LUFS, -0.59 dBTP ✅ (Spotify-optimized)
-
-See `STATE.md` for details.
+**Production-ready.** Masters generated:
+- `Stand Tall`: -14.36 LUFS, -0.59 dBTP (Spotify-optimized) ✅
+- `Life You Chose`: -23.41 LUFS (quiet export, user approved)
 
 ## Documentation
 
-- **`QUICK_START.md`** - Get your first master in 30 min (start here!)
-- `STATE.md` - Current operational state (load this first in new sessions)
-- `docs/status/STATUS.md` - Operating procedures and contract
-- `docs/reference/EXPORT_FINDINGS.md` - Export automation experiments
-- `STAND_TALL_VOCAL_SETUP.md` - Vocal processing workflow (3-layer leveling)
+| File | Purpose |
+|------|---------|
+| **[`QUICK_START.md`](QUICK_START.md)** | 30-minute setup guide (start here) |
+| [`STATE.md`](STATE.md) | Operational state & commands |
+| [`docs/API.md`](docs/API.md) | Python API reference |
+| [`docs/status/STATUS.md`](docs/status/STATUS.md) | Operating procedures |
+| [`STAND_TALL_VOCAL_SETUP.md`](STAND_TALL_VOCAL_SETUP.md) | Vocal processing guide |
 
-## Quick Commands
+## Commands
 
-### Mastering
 ```bash
-# Autonomous optimization (recommended)
-flaas master-premium --mode loud_preview --yes --port 11000  # -9 LUFS target
-flaas master-premium --mode streaming_safe --yes --port 11000  # -14 LUFS (Spotify)
+# Mastering (autonomous)
+flaas master-premium --mode loud_preview --yes --port 11000     # -9 LUFS (loud)
+flaas master-premium --mode streaming_safe --yes --port 11000   # -14 LUFS (Spotify)
+flaas verify-audio output/your_master.wav                        # Analyze result
 
-# Analyze results
-flaas verify-audio output/your_master.wav
+# Development
+make smoke       # Sanity check (7s)
+make write-fast  # Dev gate (9s)
+make write       # Commit gate (39s)
 ```
-
-### Development
-```bash
-make smoke       # Fast sanity check (7s, read-only)
-make write-fast  # Dev loop gate (9s, write tests)
-make write       # Pre-commit gate (39s, full suite)
-```
-
-## Track Indexing
-
-- Regular tracks: 0, 1, 2, ...
-- Return tracks: -1, -2, -3, ...
-- **Master track: -1000**
 
 ## Install
 
 ```bash
+git clone <repo>
+cd finishline_audio_repo
 pip install -e .
 ```
 
-## Requirements
-
+**Requirements:**
 - Python 3.11+
 - Ableton Live 11.3+
-- AbletonOSC remote script
+- [AbletonOSC](https://github.com/ideoforms/AbletonOSC) remote script
+- Waves plugins (C6, SSL, L3) for premium mastering
+
+## Architecture
+
+**Track Indexing (AbletonOSC):**
+- Regular tracks: `0, 1, 2, ...`
+- Return tracks: `-1, -2, -3, ...`
+- Master track: `-1000`
+
+**Core Modules:**
+- `cli.py` - Command interface
+- `master_premium.py` - Waves optimization engine
+- `master_consensus.py` - Stock Ableton mastering
+- `ui_export_macos.py` - UI automation for export
+- `analyze.py` - LUFS/True Peak analysis
+- `osc_rpc.py` - OSC request/response RPC
+
+**See [`docs/architecture/`](docs/architecture/) for details.**
