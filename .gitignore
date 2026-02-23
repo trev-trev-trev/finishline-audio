@@ -10,11 +10,11 @@ __pycache__/
 venv/
 .env
 
-# Audio / large outputs
+# Audio / large outputs (recursive)
 input/*.wav
-output/*.wav
-output/*.flac
-output/*.aiff
+output/**/*.wav
+output/**/*.flac
+output/**/*.aiff
 data/reports/*.html
 data/caches/*.json
 data/actions/*.json
