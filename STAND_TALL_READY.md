@@ -6,15 +6,18 @@
 
 **CRITICAL:** Fix vocal levels at source before mastering.
 
-Follow complete guide: `STAND_TALL_VOCAL_SETUP.md`
+Follow complete guide: `STAND_TALL_VOCAL_SETUP.md` (Version 2.0 - Final)
 
-**Quick checklist:**
-- [ ] VOCALS bus: Utility → Vocal Rider → Sibilance → F6 → R-Vox → Utility
-- [ ] Chorus Features bus: Utility → F6 → DeEsser → S1 → R-Vox
-- [ ] Reverb/Delay returns: EQ + sidechain ducking from VOCALS
-- [ ] Test full track, fix extreme cases with clip gain
+**Quick checklist (updated with ChatGPT feedback):**
+- [ ] Layer A: Clip gain pass (5-10 min, primary fix!)
+- [ ] VOCALS GROUP: Utility → Vocal Rider → F6 (static) → R-Vox → Sibilance → F6 (dynamic) → Utility
+- [ ] INSTRUMENTS GROUP: F6 with sidechain ducking from VOCALS (max -3 dB presence, -2 dB body)
+- [ ] Chorus Features GROUP: Utility → F6 → DeEsser → S1 → R-Vox
+- [ ] Reverb/Delay: Group-level sends (POST-fader), EQ + sidechain ducking
+- [ ] Calibration: Dial on densest chorus, verify quietest verse
+- [ ] Lock vocal: Freeze/flatten VOCALS GROUP before master optimization
 
-**Why:** Master chain (C6/SSL/L3) will exaggerate vocal inconsistencies. Level vocals first = cleaner master.
+**Why:** Master chain (C6/SSL/L3) will exaggerate vocal inconsistencies. 3-layer leveling + locked vocal = cleaner master.
 
 ---
 

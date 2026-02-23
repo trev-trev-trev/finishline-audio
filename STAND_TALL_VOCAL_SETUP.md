@@ -1,6 +1,8 @@
-# 🎤 STAND TALL - VOCAL PROCESSING SETUP
+# 🎤 STAND TALL - VOCAL PROCESSING SETUP (FINAL)
 
 **Do this BEFORE running master optimization** - master chain will exaggerate vocal inconsistencies.
+
+**Version 2.0** - Incorporates all ChatGPT feedback (3-layer model, F6 split, group-level sends, lock vocal step)
 
 ---
 
@@ -11,10 +13,12 @@
 ### **Layer A: Clip Gain / Utility Automation (COARSE - DO THIS FIRST!)**
 - **Fix worst phrases:** ±1-4 dB adjustments
 - **Time:** 5-10 minutes, listen through track once
-- **Goal:** No phrase is "obviously way too loud/quiet"
 - **Method:** 
-  - In Arrangement View, use Clip Gain slider
-  - OR automate Utility PRE gain for dynamic fixes
+  - In Arrangement View, use Clip Gain slider on individual clips
+  - OR automate Utility PRE gain on VOCALS group for dynamic fixes
+- **"DONE" criteria (measurable gate):**
+  - ✅ **No phrase is obviously off WITHOUT Vocal Rider enabled**
+  - ✅ **When you enable Vocal Rider, it rarely hits range limits (±2-4 dB)**
 - **This is primary fix** - if you skip this, Vocal Rider will slam range limits
 
 ### **Layer B: Compression (MEDIUM - Steady Containment)**
@@ -31,69 +35,87 @@
 
 ---
 
-## 🎯 VOCALS BUS (Lead Vocals)
+## 🎯 VOCALS GROUP (Lead Vocals)
+
+**CRITICAL:** All processing happens on VOCALS **GROUP** (return bus), not individual vocal tracks.
 
 **Goal:** Consistent level, softer top, less mud, smooth dynamics
 
 ### Device Chain (top → bottom):
 
 #### 1. **Ableton Utility** (PRE gain staging)
-- **Gain:** Adjust so vocal peaks sit **-10 to -6 dBFS** on VOCALS meter (pre-chain)
+- **Gain:** Adjust so vocal peaks sit **-10 to -6 dBFS** on VOCALS group meter (pre-chain)
 - **Target:** After this Utility, before any processing
 - This is your "trim in" - sets proper gain staging for the chain
 
 #### 2. **MANUAL PASS: Clip Gain / Utility Automation (Layer A)**
 - **CRITICAL:** Do this BEFORE enabling other plugins!
-- Listen through track, fix worst offenders (±1-4 dB)
-- Use Clip Gain slider in Arrangement View OR automate this Utility's gain
-- **Goal:** No phrase is "obviously way too loud/quiet"
+- Listen through track, fix worst phrases (±1-4 dB)
+- Use Clip Gain slider on individual clips OR automate this Utility's gain
+- **"DONE" criteria:**
+  - No phrase obviously off WITHOUT Vocal Rider
+  - Vocal Rider rarely hits range limits when enabled
 - **Time:** 5-10 minutes
 - **This is the primary fix** - everything else is polish
 
 #### 3. **Waves Vocal Rider** (Layer C - Fine polish)
-- **Range:** ±2-4 dB (NOT ±6+ dB! If it's slamming limits, go back to clip gain)
+- **Range:** ±2-4 dB (if slamming limits, go back to clip gain!)
 - **Speed:** Fast (if it lags, go faster; if it chatters, slower)
 - **Sensitivity:** Medium-high (catch quiet lines)
 - **Sidechain filter/detection:** Ignore lows (kick/bass won't drive it)
 - **Output:** 0 dB (trim later with POST utility)
 - *Purpose: Micro-balancing, phrase-to-phrase smoothing (NOT primary leveling)*
 
-#### 4. **Waves R-Vox** (Layer B - Compression)
+#### 4. **Waves F6 (Static Cleanup)** - BEFORE COMPRESSION
+- **Purpose:** Subtractive EQ before compression (prevents comp reacting to mud/boxiness)
+- **HPF:** 80 Hz, 24 dB/oct (rumble removal)
+  - **Flexibility:** Lower to 60-70 Hz if vocal sounds hollow/thin
+- **Mud removal (STATIC cut):**
+  - Freq: 220–350 Hz
+  - Q: 1.0–1.4 (wide)
+  - **Static mode** (not dynamic)
+  - Cut: -2 to -4 dB (permanent reduction)
+- **Harshness removal (STATIC cut):**
+  - Freq: 2.5–4.5 kHz
+  - Q: 2–4 (narrower)
+  - **Static mode** (not dynamic)
+  - Cut: -1 to -3 dB (permanent reduction, gentle)
+- *Purpose: Clean up problem areas BEFORE compression sees them*
+
+#### 5. **Waves R-Vox** (Layer B - Compression)
 - **Threshold:** Set for 3–6 dB gain reduction on loud lines (typical), peaks 8 dB max
 - **Gate:** OFF or very light
 - **Output:** Match bypass loudness (no jumps)
 - *Purpose: Consistent RMS, steady containment*
 - **NOTE:** Compression can raise sibilance - de-ess AFTER this
 
-#### 5. **Waves Sibilance** (or Waves DeEsser)
+#### 6. **Waves Sibilance** (or Waves DeEsser)
 - **Target band:** 5–9 kHz
 - **Reduction:** 2–5 dB on "S/T" moments (not constant)
 - *Purpose: Tame sibilance AFTER compression (compression raises S's)*
 - **Placement:** After R-Vox is critical for "soft/polished" goal
 
-#### 6. **Waves F6** (Dynamic EQ)
-- **HPF:** 80 Hz, 24 dB/oct (rumble removal)
-  - **Flexibility:** Lower to 60-70 Hz if vocal sounds hollow/thin
-  - For 111-track project, aggressive HPF helps avoid mud
-- **Mud control:** 
+#### 7. **Waves F6 (Dynamic Control)** - AFTER COMPRESSION
+- **Purpose:** Dynamic frequency control (responsive to vocal dynamics)
+- **Mud control (DYNAMIC):**
   - Freq: 220–350 Hz
   - Q: 1.0–1.4 (wide)
   - **Dynamic mode**
-  - Range: -2 to -4 dB
-- **Harshness control:**
+  - Range: -2 to -4 dB (responds to buildup)
+- **Harshness control (DYNAMIC):**
   - Freq: 2.5–4.5 kHz
   - Q: 2–4 (narrower)
   - **Dynamic mode**
-  - Range: -2 to -5 dB
-- **Backup sibilance** (if Sibilance plugin isn't enough):
+  - Range: -2 to -5 dB (responds to peaks)
+- **Backup sibilance (DYNAMIC - if Sibilance plugin isn't enough):**
   - Freq: 6–9 kHz
   - **Dynamic mode**
   - Range: -2 to -4 dB
-- *Purpose: Surgical frequency control without static cuts*
+- *Purpose: Dynamic frequency control without static cuts*
 
-#### 7. **Ableton Utility** (POST trim)
-- **Gain:** Final trim to place VOCALS in the mix
-- This is your "trim out" - balances vocal bus vs. other elements
+#### 8. **Ableton Utility** (POST trim)
+- **Gain:** Final trim to place VOCALS group in the mix
+- This is your "trim out" - balances vocal group vs. other elements
 
 ### Optional (only if quiet lines still disappear):
 
@@ -105,22 +127,61 @@
 
 ---
 
+## 📐 CALIBRATION PROCEDURE (Dial Settings Correctly)
+
+**Don't just guess - use this workflow:**
+
+### Step 1: Find Your Extremes
+1. **Locate densest chorus** (loudest, most energetic section)
+2. **Locate quietest verse** (softest, most intimate section)
+
+### Step 2: Dial on Dense Chorus
+1. Solo VOCALS group
+2. Play densest chorus on loop
+3. Dial in each plugin:
+   - Vocal Rider: Should move ±1-2 dB (small movements)
+   - F6 static: Cut mud/harshness to taste
+   - R-Vox: 4-6 dB GR on loud lines
+   - Sibilance: 3-5 dB reduction on "S/T"
+   - F6 dynamic: Bands move but not pinned
+
+### Step 3: Verify on Quiet Verse
+1. Play quietest verse
+2. Check if verse disappears or feels thin
+3. **If verse disappears:**
+   - ✅ Raise Vocal Rider sensitivity slightly
+   - ✅ Use MV2 lightly (Low Level 10-20)
+   - ❌ **DON'T crush R-Vox harder** (causes pumping)
+4. **If verse sounds good:**
+   - Settings are correct
+   - Move to next phase
+
+### Step 4: Full Track Test
+1. Play full track (unsolo)
+2. Listen for:
+   - Consistent level across verses/choruses
+   - No pumping/breathing
+   - Smooth FX tails
+2. If any phrase still jumps out, add clip gain adjustment (back to Layer A)
+
+---
+
 ## 🎸 INSTRUMENTS / MUSIC BUS (Critical Addition!)
 
 **Goal:** Make space for vocals WITHOUT just boosting vocals
 
-### NEW BUS: INSTRUMENTS (or MUSIC)
+### NEW GROUP: INSTRUMENTS (or MUSIC)
 
-Route all non-vocal elements to this bus:
+Route all non-vocal elements to this group:
 - All instrument tracks
 - All drum tracks  
 - All synth tracks
-- **NOT vocals or vocal FX**
+- **NOT vocals or vocal FX returns**
 
 ### Device Chain:
 
 #### **Waves F6** (Dynamic EQ with sidechain)
-- **Sidechain input:** VOCALS bus (lead vocals)
+- **Sidechain input:** VOCALS group (lead vocals)
 - **Purpose:** Duck instruments when vocals sing, creating space
 
 **Dynamic EQ Bands (sidechained from VOCALS):**
@@ -129,47 +190,46 @@ Route all non-vocal elements to this bus:
    - Freq: 2.5–4.5 kHz
    - Q: 1.5–2.5
    - **Dynamic mode, Sidechain ON**
-   - Range: -1 to -3 dB
+   - Range: -1 to **-3 dB MAX** (guardrail)
+   - Release: **150–350 ms** (avoid pumping)
    - *Ducks instrument presence when vocals sing*
 
 2. **Body band (vocal warmth):**
    - Freq: 200–350 Hz
    - Q: 1.0–1.5
    - **Dynamic mode, Sidechain ON**
-   - Range: -1 to -2 dB
+   - Range: -1 to **-2 dB MAX** (guardrail)
+   - Release: **150–350 ms** (avoid pumping)
    - *Ducks instrument low-mids when vocals sing*
+
+**Guardrails (prevent overuse):**
+- **Presence duck:** Max -3 dB (more sounds hollow)
+- **Body duck:** Max -2 dB (more loses weight)
+- **Release:** 150-350 ms (faster pumps, slower drags)
+- **If mix sounds hollow:** Reduce presence duck before touching vocal level
 
 **Result:** Vocals sit naturally in mix without level wars. Instruments "breathe" around vocals.
 
 ---
 
-## 🎵 CHORUS FEATURES BUS (Background Vocals)
+## ⚠️ SIDECHAIN VERIFICATION CHECKLIST
 
-**Goal:** Wider, flatter, supportive (not competing with lead)
+**After routing tracks to INSTRUMENTS group, verify:**
 
-### Device Chain (top → bottom):
+1. **Check existing sidechains:**
+   - Do any effects currently sidechain off individual elements?
+   - (e.g., reverb ducking from kick, delay from snare)
 
-#### 1. **Ableton Utility** (PRE gain staging)
-- Start **-3 dB** vs lead vocals (backgrounds sit behind)
+2. **Verify sidechain sources still correct:**
+   - If kick was on track 5, now it's in INSTRUMENTS group
+   - Sidechain detectors may see different levels
+   - Re-test each sidechained effect
 
-#### 2. **Waves F6** (Dynamic EQ)
-- **HPF:** 120 Hz, 24 dB/oct (more aggressive than lead)
-- **Mud control:** 250–400 Hz, MORE cut than lead (-3 to -6 dB)
-- **Harshness control:** 3–5 kHz, MORE cut than lead (-3 to -6 dB)
-- *Purpose: Cleaner spectrum, avoids masking lead*
+3. **Fix broken sidechains:**
+   - If sidechain doesn't work anymore, re-route to correct source
+   - May need to use pre-fader send from individual track
 
-#### 3. **Waves Sibilance/DeEsser**
-- **Stronger than lead** (backgrounds can be duller)
-- Target: 5–9 kHz, 3–6 dB reduction
-
-#### 4. **Waves S1** (Stereo imaging)
-- **Width:** 1.2–1.4 (spread backgrounds wide)
-- **Keep low end mono:** Below ~150 Hz (prevents phase issues)
-- *Purpose: Wide soundstage, keeps lead centered*
-
-#### 5. **Waves R-Vox**
-- **Threshold:** 6–10 dB GR (backgrounds can be flatter/more compressed)
-- *Purpose: Consistent level, stays in background*
+**Don't skip this** - routing changes can break existing automation.
 
 ---
 
@@ -177,18 +237,22 @@ Route all non-vocal elements to this bus:
 
 Keep verbs/delays **on sends**, then **duck the return** so they breathe with vocals.
 
-### ⚠️ CRITICAL: POST-Fader Send Routing
+### ⚠️ CRITICAL: GROUP-LEVEL SEND ROUTING
 
-**MUST DO:** Set all vocal sends to **POST-fader**
-1. Right-click each send knob on VOCALS bus
-2. Select "Post-Fader" mode
-3. Repeat for all sends (reverb, delay, etc.)
+**WHERE sends live (this is critical for stable FX):**
 
-**Why this matters:**
-- **POST-fader:** Vocal Rider/leveling changes affect FX send level = even reverb/delay
-- **Pre-fader (WRONG):** Dry vocal smooths, but reverb/delay stays uneven = unstable sound
+1. **Sends must be on VOCALS GROUP** (return bus), **NOT individual vocal tracks**
+2. **Why:** Vocal Rider on group affects group fader, which affects send levels (if post-fader)
+3. **If sends are on individual tracks:** Vocal Rider won't affect FX send levels = uneven reverb/delay
 
-**Without POST-fader sends, your vocal processing won't work properly!**
+**How to set up:**
+1. **Remove all sends from individual vocal tracks**
+2. **Add sends on VOCALS GROUP only**
+3. **Set sends to POST-fader** (right-click send knob → Post-Fader)
+
+**Result:** When Vocal Rider/compression smooths dry vocal, FX levels smooth too = stable sound.
+
+---
 
 ### Return A (Reverb)
 
@@ -203,7 +267,7 @@ Keep verbs/delays **on sends**, then **duck the return** so they breathe with vo
 - Pre-delay: 15–40 ms (separates vocal from verb)
 
 #### After reverb plugin:
-- **Ableton Compressor** with **sidechain from VOCALS bus**
+- **Ableton Compressor** with **sidechain from VOCALS group**
   - **Duck amount:** 3–6 dB GR on phrases
   - **Attack:** Fast (5–10 ms)
   - **Release:** 200–400 ms (slow return)
@@ -228,27 +292,39 @@ Keep verbs/delays **on sends**, then **duck the return** so they breathe with vo
 
 ---
 
-## 🛠️ FIX REMAINING "RANDOM LOUD/QUIET" MOMENTS
+## 🎵 CHORUS FEATURES BUS (Background Vocals)
 
-After processing, if specific words/phrases still spike or dip:
+**Goal:** Wider, flatter, supportive (not competing with lead)
 
-### Option 1: Clip Gain (preferred for isolated issues)
-1. In Arrangement View, double-click the clip
-2. Use **Clip Gain** slider (±1–2 dB adjustments)
-3. Fast, transparent, non-destructive
+### Device Chain (top → bottom):
 
-### Option 2: Automation (for dynamic fixes)
-1. Automate **Utility PRE gain** (the first Utility in chain)
-2. Draw automation envelope for problem words
-3. Quick down/up (fast, clean)
+#### 1. **Ableton Utility** (PRE gain staging)
+- Start **-3 dB** vs lead vocals (backgrounds sit behind)
 
-**DO NOT** automate final master chain - fix issues at source.
+#### 2. **Waves F6** (Static + Dynamic EQ)
+- **HPF:** 120 Hz, 24 dB/oct (more aggressive than lead)
+- **Mud control:** 250–400 Hz, MORE cut than lead (-3 to -6 dB, STATIC)
+- **Harshness control:** 3–5 kHz, MORE cut than lead (-3 to -6 dB, STATIC)
+- *Purpose: Cleaner spectrum, avoids masking lead*
+
+#### 3. **Waves Sibilance/DeEsser**
+- **Stronger than lead** (backgrounds can be duller)
+- Target: 5–9 kHz, 3–6 dB reduction
+
+#### 4. **Waves S1** (Stereo imaging)
+- **Width:** 1.2–1.4 (spread backgrounds wide)
+- **Keep low end mono:** Below ~150 Hz (prevents phase issues)
+- *Purpose: Wide soundstage, keeps lead centered*
+
+#### 5. **Waves R-Vox**
+- **Threshold:** 6–10 dB GR (backgrounds can be flatter/more compressed)
+- *Purpose: Consistent level, stays in background*
 
 ---
 
 ## 📊 OBJECTIVE TARGETS (What "Good" Looks Like)
 
-### **VOCALS Bus Meters:**
+### **VOCALS Group Meters:**
 
 **Pre-chain (after Utility PRE):**
 - Peaks: **-10 to -6 dBFS** (before any processing)
@@ -266,13 +342,17 @@ After processing, if specific words/phrases still spike or dip:
 - ✅ Occasionally hits range limits (±2-4 dB), but NOT constantly
 - ❌ **Pinned at range limits** = go back to Layer A (clip gain)
 
+#### F6 Static (before R-Vox):
+- ✅ **Permanent cuts** (not moving)
+- ✅ Mud/harshness reduced by 2-4 dB
+
 #### R-Vox (Compression):
 - ✅ **Typical GR: 3-6 dB** (steady containment)
 - ✅ **Peak GR: 8 dB max** (on loudest phrases)
 - ❌ **Constant 10+ dB GR** = reduce threshold OR go back to Layer A
 - ❌ **Pumping/breathing** = attack/release too fast OR too much compression
 
-#### F6 Dynamic Bands:
+#### F6 Dynamic (after Sibilance):
 - ✅ **Move often** (responding to vocal dynamics)
 - ✅ **Not pinned at max range** (dynamic control, not brick wall)
 - ❌ **Constantly maxed out** = range too narrow OR source problem
@@ -280,7 +360,9 @@ After processing, if specific words/phrases still spike or dip:
 #### Instruments Bus F6 (Sidechain):
 - ✅ **Ducks 1-3 dB when vocals sing** (subtle space-making)
 - ✅ **Returns to 0 dB in gaps** (breathing behavior)
+- ✅ **Release 150-350 ms** (smooth, not pumpy)
 - ❌ **Constant ducking** = sidechain sensitivity too high
+- ❌ **Mix sounds hollow** = reduce presence duck (max -3 dB!)
 
 ### **Master Meter:**
 - Total mix: **-18 to -12 dBFS** (leave headroom for mastering)
@@ -290,8 +372,9 @@ After processing, if specific words/phrases still spike or dip:
 - ❌ Vocal bus clipping (reduce Utility PRE gain)
 - ❌ Vocal Rider pinned at limits (do Layer A: clip gain first!)
 - ❌ R-Vox causing pumping (reduce threshold OR attack/release too fast)
-- ❌ Reverb/Delay overwhelming mix (check sidechain ducking + POST-fader sends)
-- ❌ Instruments not ducking (check F6 sidechain routing)
+- ❌ Reverb/Delay overwhelming mix (check sidechain ducking + group-level sends)
+- ❌ Instruments not ducking (check F6 sidechain routing + verify after routing change)
+- ❌ Mix sounds hollow (reduce presence duck on instruments bus)
 
 ---
 
@@ -299,83 +382,91 @@ After processing, if specific words/phrases still spike or dip:
 
 ### **Phase 1: Coarse Leveling (Layer A - CRITICAL!)**
 
-1. **Add Utility PRE to VOCALS bus**, set gain for -10 to -6 dBFS peaks
+1. **Add Utility PRE to VOCALS group**, set gain for -10 to -6 dBFS peaks
 2. **MANUAL PASS: Clip gain / automation**
    - Listen through full track
    - Fix worst phrases (±1-4 dB)
-   - Use Clip Gain slider OR automate Utility PRE
-   - **Goal:** No phrase is "obviously way too loud/quiet"
+   - Use Clip Gain slider on individual clips OR automate Utility PRE
+   - **"DONE" criteria:** No phrase obviously off WITHOUT Vocal Rider enabled
    - **Time:** 5-10 minutes
 3. **Verify:** Play through track, levels should be "mostly even"
 
-### **Phase 2: VOCALS Bus Chain (Layers B & C)**
+### **Phase 2: VOCALS Group Chain (Layers B & C)**
 
-4. **Add compression chain:**
+4. **Add chain in order:**
    - Vocal Rider (±2-4 dB range)
+   - F6 (static cleanup: HPF + mud/harshness cuts)
    - R-Vox (3-6 dB GR)
    - Sibilance (after R-Vox!)
-   - F6 (dynamic EQ)
+   - F6 (dynamic bands: mud/harshness/sibilance)
    - Utility POST (final trim)
-5. **Dial in each plugin**, watch objective targets
-6. **Verify:** Vocal Rider not pinned, R-Vox steady 3-6 dB GR
+
+5. **Calibration procedure:**
+   - Find densest chorus + quietest verse
+   - Dial on chorus, verify on verse
+   - Adjust Vocal Rider sensitivity if verse disappears
+   - Use MV2 only if needed (last resort)
+
+6. **Verify:** 
+   - Vocal Rider not pinned at limits (80% time within ±1.5 dB center)
+   - R-Vox steady 3-6 dB GR
+   - F6 static cuts permanent, F6 dynamic bands moving
 
 ### **Phase 3: Instruments Bus Ducking (Space-Making)**
 
-7. **Create INSTRUMENTS/MUSIC bus**
-8. **Route all non-vocal tracks** to this bus
-9. **Add F6 with sidechain from VOCALS**
-10. **Set dynamic bands:** 2.5-4.5 kHz (-1 to -3 dB), 200-350 Hz (-1 to -2 dB)
-11. **Verify:** Instruments duck when vocals sing
+7. **Create INSTRUMENTS/MUSIC group**
+8. **Route all non-vocal tracks** to this group
+9. **CRITICAL: Verify existing sidechains** (checklist above)
+10. **Add F6 with sidechain from VOCALS group**
+11. **Set dynamic bands with guardrails:**
+    - 2.5-4.5 kHz: -1 to -3 dB MAX, Release 150-350 ms
+    - 200-350 Hz: -1 to -2 dB MAX, Release 150-350 ms
+12. **Verify:** Instruments duck when vocals sing, release smoothly
 
 ### **Phase 4: Background Vocals & FX**
 
-12. **Setup Chorus Features chain** (backgrounds)
-13. **Setup Reverb/Delay returns** (with EQ + sidechain ducking)
-14. **CRITICAL: Set all vocal sends to POST-fader**
-15. **Verify:** Reverb/delay levels stay even with vocal dynamics
+13. **Setup Chorus Features group chain** (backgrounds)
+14. **Setup Reverb/Delay returns** (with EQ + sidechain ducking)
+15. **CRITICAL: Remove sends from individual vocal tracks**
+16. **Add sends on VOCALS GROUP only, set to POST-fader**
+17. **Verify:** Reverb/delay levels stay even with vocal dynamics
 
-### **Phase 5: Final Check & Export**
+### **Phase 5: Final Check & Lock Vocal**
 
-16. **Listen through full track**, check problem spots resolved
-17. **Verify objective targets** (Vocal Rider usage, R-Vox GR, meters)
-18. **Export quick reference** (no mastering) to check balance
-19. **If everything sounds consistent, run master optimization:**
+18. **Listen through full track**, check problem spots resolved
+19. **Verify objective targets** (Vocal Rider usage, R-Vox GR, meters, ducking)
+20. **Export quick reference** (no mastering) to check balance
+
+21. **LOCK VOCAL (CRITICAL - do before master optimization):**
+    - Right-click VOCALS group → Freeze Track
+    - OR Export VOCALS group as stem, import on new track, disable VOCALS group
+    - **Why:** Master optimizer needs stable target, not moving vocal dynamics
+    - **Result:** Master chain optimizes consistent vocal level
+
+22. **Run master optimization:**
     ```bash
     ./RUN_STAND_TALL_NOW.sh
     ```
 
 ---
 
-## 🎯 EXPECTED RESULTS
-
-**Before:**
-- Random loud/quiet sections
-- Harsh sibilance cutting through
-- Muddy low-mids masking clarity
-- Reverb/delay fighting lead vocal
-
-**After:**
-- Consistent vocal level (verse/chorus smooth)
-- Soft top end (no harsh S/T)
-- Clear presence (no mud)
-- Smooth dynamics (compressed but natural)
-- Reverb/delay breathing with vocals
-
----
-
 ## 💡 PRO TIPS
 
-1. **Clip gain FIRST, always:** Vocal Rider is polish (Layer C), not primary fix (Layer A)
-2. **POST-fader sends are mandatory:** Pre-fader = uneven FX, sounds amateur
-3. **Instruments bus ducking = secret weapon:** Create space without boosting vocals
-4. **De-ess AFTER compression:** R-Vox can raise sibilance, fix it downstream
-5. **Watch objective targets:** If Vocal Rider is pinned, go back to clip gain
-6. **A/B constantly:** Bypass entire chain to hear improvement
-7. **Solo VOCALS bus:** Dial in processing without distractions
-8. **Check in context:** Mix decisions should be made in full mix
-9. **Less is more:** If plugin isn't helping, remove it
-10. **HPF aggressively:** 80 Hz on lead (60-70 Hz if thin), 120 Hz on backgrounds
-11. **Sidechain ducking on returns:** Makes reverb/delay sound expensive
+1. **Clip gain FIRST, always** - Vocal Rider is polish (Layer C), not primary fix (Layer A)
+2. **F6 split is critical** - Static cleanup BEFORE compression, dynamic AFTER
+3. **Group-level sends only** - Individual track sends won't follow Vocal Rider
+4. **Calibrate on extremes** - Dial on densest chorus, verify on quietest verse
+5. **Lock vocal before mastering** - Freeze/flatten VOCALS group = stable target
+6. **Instruments ducking = secret weapon** - Create space without boosting vocals
+7. **Ducking guardrails prevent overuse** - Max -3 dB presence, -2 dB body
+8. **De-ess AFTER compression** - R-Vox can raise sibilance, fix it downstream
+9. **Watch objective targets** - If Vocal Rider pinned, go back to clip gain
+10. **Verify sidechains after routing** - Routing changes can break existing automation
+11. **A/B constantly** - Bypass entire chain to hear improvement
+12. **Solo VOCALS group** - Dial in processing without distractions
+13. **Check in context** - Mix decisions should be made in full mix
+14. **Less is more** - If plugin isn't helping, remove it
+15. **HPF aggressively** - 80 Hz on lead (60-70 Hz if thin), 120 Hz on backgrounds
 
 ---
 
@@ -401,17 +492,34 @@ For "all over the place" vocals:
 
 **Skipping Layer A = Vocal Rider slams limits = master chain pumps.**
 
-### **3. POST-Fader Sends or Bust**
+### **3. F6 Split is Critical**
 
-Pre-fader sends = uneven FX = amateur sound. Always POST-fader.
+- **Static F6 (before R-Vox):** Subtractive EQ (prevents comp reacting to mud/boxiness)
+- **Dynamic F6 (after Sibilance):** Responsive frequency control
 
-### **4. Instruments Bus Ducking = Game Changer**
+**Don't skip the split** - it's the difference between smooth and harsh.
 
-Creating space by ducking instruments (2.5-4.5 kHz, 200-350 Hz) is smarter than boosting vocals. Master this technique.
+### **4. Group-Level Sends or Bust**
+
+Sends on individual vocal tracks = Vocal Rider doesn't affect FX levels = uneven reverb/delay.
+
+**Always use group-level sends.**
+
+### **5. Lock Vocal Before Mastering**
+
+Freeze/flatten VOCALS group = master optimizer has stable target.
+
+**Don't skip this** - master chain chasing moving dynamics = poor convergence.
+
+### **6. Instruments Bus Ducking = Game Changer**
+
+Creating space by ducking instruments (2.5-4.5 kHz, 200-350 Hz) is smarter than boosting vocals. 
+
+**But use guardrails** - max -3 dB presence, -2 dB body, or mix sounds hollow.
 
 ---
 
-**When vocal processing is complete, run:**
+**When vocal processing is complete and locked, run:**
 ```bash
 cd /Users/trev/Repos/finishline_audio_repo
 ./RUN_STAND_TALL_NOW.sh
